@@ -1,0 +1,6 @@
+mePath:
+ - creare funzione per calcolare perimetro e area
+ - creare funzione per dividere percorso da una retta
+ - creare funzione per specchiare percorso
+ - creare funzione per sommare outlines
+ - creare funzione per verificare se outlines uguali
