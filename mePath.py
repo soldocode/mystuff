@@ -18,6 +18,7 @@ def makePattern(model,parameters):
     result=MODELS[model](parameters)
     return result
 
+
 MODELS={}
 
 from PathModels import *

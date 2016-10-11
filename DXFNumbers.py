@@ -8,7 +8,7 @@
 
 import math
 from dxfwrite import DXFEngine as dxf
-import geoFun as geo
+from mystuff import geoFun as geo
 
 nodes=[[0,0],       #0
        [0,25],      #1

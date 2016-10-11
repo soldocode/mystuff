@@ -9,8 +9,8 @@
 
 import math
 from dxfwrite import DXFEngine as dxf
-import mePath
-import geoFun as geo
+from mystuff import mePath
+from mystuff import geoFun as geo
 
 
 class Drawing (object):
