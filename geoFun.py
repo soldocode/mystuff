@@ -1,3 +1,23 @@
+##############################################################################
+#
+#
+# Functions:
+# > DetMatrix3x3(A,B,C)
+# > VertexAngle(a1,a2)
+# > AngleFromTwoPoints(p1,p2)
+# > TwoPointsToVector(p1,p2) 
+# > CircleFrom3Points(p1,p2,p3)
+# > TriangleDirection(p1,p2,p3)
+# > TriangleArea(p1,p2,p3)
+# > TranslateNodes(n,x,y)
+# > RotateNodes(n,alfa,p)
+# > EllipsisPath(a,b,s)
+# > ShapeArea(nodes,paths) <-- to do
+# > ShapePerimeter(nodes,paths) <-- to do
+# > LineEqFromTwoPoints(p1,p2) <--to do
+
+
+
 import math
 
 
@@ -15,6 +35,20 @@ def VertexAngle(a1,a2):
         return a1-a2+(math.pi/2)
         
 
+def AngleFromTwoPoints(p1,p2):
+    deltaX=float(p2[0]-p1[0])
+    deltaY=float(p2[1]-p1[1])
+    if deltaX==0: 
+        degree=90.00
+    else: 
+        degree=math.degrees(math.atan(deltaY/deltaX))
+    return degree
+
+
+def PointFromVector(p,v):
+    return [p[0]+v[0]*math.cos(math.radians(v[1])),p[1]+v[0]*math.sin(math.radians(v[1]))]
+    
+
 def TwoPointsToVector(p1,p2): #([x1,y1],[x2,y2])
     vect={}
     vect['Module']=math.sqrt(math.pow(p2[0]-p1[0],2)+math.pow(p2[1]-p1[1],2))
@@ -30,6 +64,25 @@ def TwoPointsToVector(p1,p2): #([x1,y1],[x2,y2])
     vect['Degree']=degree
         
     return vect
+    
+    
+def StLineIntersection(stL1,stL2):
+    #stL=[[x,y],degree]
+    #x=(n1-n2)/(m2-m1)
+    p=[]
+    if stL1[1]!=stL2[1]:
+        m1=math.tan(stL1[1])
+        n1=stL1[0][1]-m1*stL1[0][0]
+        m2=math.tan(stL2[1])
+        n2=stL2[0][1]-m2*stL2[0][0]
+        x=(n1-n2)/(m2-m1)
+        y=m1*x+n1
+        p=[x,y]  
+    return p
+    
+
+def StLineOffset(stL,offset):
+    return [PointFromVector(stL[0],[offset,stL[1]]),stL[1]]
     
            
 def CircleFrom3Points(p1,p2,p3):#([x1,y1],[x2,y2],[x3,y3])consecutivi
@@ -140,3 +193,21 @@ def ShapeArea(nodes,paths):
 def ShapePerimeter(nodes,paths):
     perimeter=0
     return perimeter
+
+
+def LineEqFromTwoPoints(p1,p2):
+    #y = mx + n  ---> Explicit equation of the straight line
+    #m = (y1-y2)/(x1-x2)
+    #n = y-mx
+    eq={}
+    dx=float(p1[0]-p2[0])
+    dy=float(p1[1]-p2[1])
+    if dx!=0: 
+        m=dy/dx
+        n=p1[1]-m*p1[0]
+        eq=dict(m=m,n=n)
+    return eq
+ 
+    
+    
+    
