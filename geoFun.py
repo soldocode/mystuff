@@ -69,11 +69,20 @@ def TwoPointsToVector(p1,p2): #([x1,y1],[x2,y2])
 def StLineIntersection(stL1,stL2):
     #stL=[[x,y],degree]
     #x=(n1-n2)/(m2-m1)
+    if stL1[1]>360.0: stL1[1]=stL1[1]-360
+    if stL1[1]<0.0: stL1[1]=stL1[1]+360
+    if stL2[1]>360.0: stL2[1]=stL2[1]-360
+    if stL2[1]<0.0: stL2[1]=stL2[1]+360
+    
     p=[]
     if stL1[1]!=stL2[1]:
-        m1=math.tan(stL1[1])
+        if (stL1[1]==90.0 or stL1[1]==270):
+            inv_stl=stL1
+            stL1=stL2
+            stL2=inv_stl
+        m1=math.tan(math.radians(stL1[1]))
         n1=stL1[0][1]-m1*stL1[0][0]
-        m2=math.tan(stL2[1])
+        m2=math.tan(math.radians(stL2[1]))
         n2=stL2[0][1]-m2*stL2[0][0]
         x=(n1-n2)/(m2-m1)
         y=m1*x+n1
@@ -82,7 +91,7 @@ def StLineIntersection(stL1,stL2):
     
 
 def StLineOffset(stL,offset):
-    return [PointFromVector(stL[0],[offset,stL[1]]),stL[1]]
+    return [PointFromVector(stL[0],[offset,stL[1]+90]),stL[1]]
     
            
 def CircleFrom3Points(p1,p2,p3):#([x1,y1],[x2,y2],[x3,y3])consecutivi
