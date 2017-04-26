@@ -5,6 +5,7 @@
 # > DetMatrix3x3(A,B,C)
 # > VertexAngle(a1,a2)
 # > AngleFromTwoPoints(p1,p2)
+# > PointFromVector(p,v)
 # > TwoPointsToVector(p1,p2) 
 # > CircleFrom3Points(p1,p2,p3)
 # > TriangleDirection(p1,p2,p3)
@@ -12,7 +13,12 @@
 # > TranslateNodes(n,x,y)
 # > RotateNodes(n,alfa,p)
 # > EllipsisPath(a,b,s)
+# > ShapeArea(nodes,paths) <-- to do
+# > ShapePerimeter(nodes,paths) <-- to do
+# > LineEqFromTwoPoints(p1,p2) <--to do
+# > StepsBetweenAngles(a1,a2,d)
 # > LineEqFromTwoPoints(p1,p2) 
+
 
 
 
@@ -204,7 +210,24 @@ def LineEqFromTwoPoints(p1,p2):
         n=p1[1]-m*p1[0]
         eq=dict(m=m,n=n)
     return eq
- 
+
     
-    
+def StepsBetweenAngles(a1,a2,d):
+    a1=NormalizeAngle(a1)
+    a2=NormalizeAngle(a2)
+    angles=[a1]
+    if a2>a1:step=(a2-a1)/d
+    else:  step=(a2+360-a1)/d
+    for i in range(1,d):
+        s=a1+step*i
+        if s>360:s=s-360
+        angles.append(s)
+    angles.append(a2)
+    return angles
+
+def NormalizeAngle(a):
+    if a>=360:a=a-360
+    if a<0:a=a+360
+    return a
+
     
