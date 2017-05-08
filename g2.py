@@ -220,7 +220,10 @@ class Circle:
         
     @property
     def radius(self):
-        return self._radius  
+        return self._radius 
+    @radius.setter
+    def radius(self,radius):
+        self._radius=radius
         
     @property
     def diameter(self):
@@ -242,6 +245,74 @@ class Circle:
     def pointLeft(self):
         return Point(self._center.x-self._radius,self._center.y)
         
+
+class Arc(Circle):
+    def __init__(self,pointStart=Point(),pointEnd=Point(),pointMiddle=Point()):
+        Circle.__init__(self)
+        self._pointStart=pointStart
+        self._pointEnd=pointEnd
+        self._pointMiddle=pointMiddle
+        self._pointStart.node=cNode(self,'pointStart')
+        self._pointEnd.node=cNode(self,'pointEnd')
+        self._pointMiddle.node=cNode(self,'pointMiddle')
+        self.updateArc()
+        
+    @property
+    def pointStart(self):
+        return self._pointStart
+    @pointStart.setter
+    def pointStart(self,p):
+        self._pointStart=p
+        self.updateArc()
+        
+    @property
+    def pointEnd(self):
+        return self._pointEnd
+    @pointEnd.setter
+    def pointEnd(self,p):
+        self._pointEnd=p
+        self.updateArc()
+        
+    @property
+    def pointMiddle(self):
+        return self._pointMiddle
+    @pointMiddle.setter
+    def pointMiddle(self,p):
+        self._pointMiddle=p
+        self.updateArc()    
+        
+        
+    def updateArc(self):
+        a=[0,0,0]
+        b=[0,0,0]
+        c=[0,0,0]
+        d=[0,0,0]
+
+        a[0]=self._pointStart.x
+        b[0]=self._pointStart.y
+        c[0]=1
+        d[0]=math.pow(self._pointStart.x,2)+math.pow(self._pointStart.y,2)
+
+        a[1]=self._pointMiddle.x
+        b[1]=self._pointMiddle.y
+        c[1]=1
+        d[1]=math.pow(self._pointMiddle.x,2)+math.pow(self._pointMiddle.y,2)
+
+        a[2]=self._pointEnd.x
+        b[2]=self._pointEnd.y
+        c[2]=1
+        d[2]=math.pow(self._pointEnd.x,2)+math.pow(self._pointEnd.y,2)
+
+        detM=DetMatrix3x3(a,b,c)
+        detA=DetMatrix3x3(d,b,c)
+        detB=DetMatrix3x3(a,d,c)
+        
+        self._center.x=detA/detM/2
+        self._center.y=detB/detM/2
+        
+        self.radius=VectorFromTwoPoints(self._center,self._pointStart).module
+        #self.direction=TriangleDirection()
+        
     
        
 def AngleFromTwoPoints(p1,p2):
@@ -258,6 +329,11 @@ def VectorFromTwoPoints(p1,p2):
     
 def PointFromVector(p,v):
     return Point(p.x+v.module*math.cos(v.angle.rad),p.y+v.module*math.sin(v.angle.rad))
+
+def DetMatrix3x3(A,B,C):
+    return A[0]*(B[1]*C[2]-B[2]*C[1])+ \
+           A[1]*(B[2]*C[0]-B[0]*C[2])+ \
+           A[2]*(B[0]*C[1]-B[1]*C[0])
     
-        
+ 
     
