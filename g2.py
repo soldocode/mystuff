@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+
 ################################################################################
 # g2.py - 2d framework module - 2017
 #
@@ -267,7 +267,7 @@ class Circle:
 
     @property
     def as_dict(self):
-       return dict(radius=self._radius, center=self._center.as_dict)
+        return dict(radius=self._radius, center=self._center.as_dict)
 
     def __repr__(self):
         return 'circle (center='+repr(self._center)+', radius='+repr(self.radius)+' )'
@@ -347,6 +347,52 @@ class Arc(Circle):
     def __repr__(self):
         return 'arc (start='+repr(self._pointStart)+', middle='+repr(self.pointMiddle)+', end='+repr(self.pointEnd)+' )'
 
+class Path:
+    def __init__(self,nodes=[],geometries=[]):
+        self.nodes=nodes
+        self.geometries=geometries
+
+    def update(self):
+        for geo in self.geometries:
+            a=geo # to do
+        self._boundBox=[Point(),Point()]  #compute bound_box
+        self._lenght=0  #compute lenght
+
+    @property
+    def boundBox(self):
+        return self._boundBox
+
+    @property
+    def lenght(self):
+        return self._length
+
+    @property
+    def as_dict(self):
+        nodes=[]
+        for node in self.nodes:
+            nodes.append(node.as_dict)
+
+        return dict(nodes=nodes, geometries=self.geometries)
+
+class Shape:
+    def __init__(self,outline=Path(),child=[],boundBox=[Point(),Point()]):
+        self.outline=outline
+        self.child=child
+        self._boundBox=boundBox
+        self._perimeter=0
+        self._area=0
+
+    @property
+    def boundBox(self):
+        return self._boundBox
+
+    @property
+    def perimeter(self):
+        return self._perimeter
+
+    @property
+    def area(self):
+        return self._area
 
 
 def AngleFromTwoPoints(p1,p2):
