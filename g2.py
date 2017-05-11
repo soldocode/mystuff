@@ -154,6 +154,18 @@ class Polar:
         return 'polar (module='+str(self._module)+', angle='+repr(self.angle)+' )'
 
 
+class BoundBox:
+    def __init__(self,bottomleft=Point(),topright=Point()):
+        self.bottomleft=bottomleft
+        self.topright=topright
+
+    def updateWithPoint(self,p):
+        if p.x>self.topright.x:self.topright.x=p.x
+        if p.x<self.bottomleft.x:self.bottomleft.x=p.x
+        if p.y>self.topright.y:self.topright.y=p.y
+        if p.y<self.bottomleft.y:self.bottomleft.y=p.y
+
+
 class Line:
     def __init__(self, p1=Point(),p2=Point()):
         self._p1=p1
@@ -223,11 +235,33 @@ class Line:
         self._delta.y=self._p2.y-self._p1.y
 
     @property
+    def lenght(self):
+        return self._polar.module
+
+    @property
+    def boundBox(self):
+        bottom_left=Point()
+        top_right=Point()
+        if self._p1.x<self._p2.x :
+            bottom_left.x=self._p1.x
+            top_right.x=self._p2.x
+        else:
+            bottom_left.x=self._p2.x
+            top_right.x=self._p1.x
+        if self._p1.y<self._p2.y :
+            bottom_left.y=self._p1.y
+            top_right.y=self._p2.y
+        else:
+            bottom_left.y=self._p2.y
+            top_right.y=self._p1.y
+        return BoundBox(bottom_left,top_right)
+
+    @property
     def as_dict(self):
-       return dict(p2=self._p2.as_dict,p1=self._p1.as_dict)
+        return dict(p2=self._p2.as_dict,p1=self._p1.as_dict)
 
     def __repr__(self):
-       return 'Line ('+repr(self._p1)+', '+repr(self._p2)+')'
+        return 'Line ('+repr(self._p1)+', '+repr(self._p2)+')'
 
 class Circle:
     def __init__(self,center=Point(),radius=0.0):
@@ -264,6 +298,19 @@ class Circle:
     @property
     def pointLeft(self):
         return Point(self._center.x-self._radius,self._center.y)
+
+    @property
+    def lenght(self):
+        return self._radius*math.pi*2
+
+    @property
+    def boundBox(self):
+        bottom_left=Point(self._center.x-self._radius,
+                          self._center.y-self._radius)
+        top_right=Point(self._center.x+self._radius,
+                        self._center.y+self._radius)
+        return BoundBox(bottom_left,top_right)
+
 
     @property
     def as_dict(self):
@@ -341,6 +388,68 @@ class Arc(Circle):
         #self.direction=TriangleDirection()
 
     @property
+    def angleStart(self):
+        return VectorFromTwoPoints(self._center,self._pointStart).angle
+
+    @property
+    def angleEnd(self):
+        return VectorFromTwoPoints(self._center,self._pointEnd).angle
+
+    @property
+    def angle(self):
+        s=self.angleStart.deg
+        e=self.angleEnd.deg
+        if s<e:s=s+360
+        diff=s-e
+        if TriangleOrientation(self._pointStart,self._pointMiddle,self._pointEnd)==-1:
+            diff=diff-360
+        return Angle(deg=(-diff))
+
+    @property
+    def lenght(self):
+        return abs((self._radius*math.pi*2/360.0)*self.angle.deg)
+
+    @property
+    def boundBox(self):
+
+        if TriangleOrientation(self._pointStart,self._pointMiddle,self._pointEnd)==1:
+            s=NormalizeAngle(self.angleEnd).deg
+        else:
+            s=NormalizeAngle(self.angleStart).deg
+
+        e=s+abs(self.angle.deg)
+
+        aa=[s]
+        go=True
+        while go:
+            go=False
+            if (s>=0) & (s<90) & (e>s+90):
+                aa.append(90)
+                s=90
+                go=True
+            if (s>=90) & (s<180) & (e>s+90):
+                aa.append(180)
+                s=180
+                go=True
+            if (s>=180) & (s<270) & (e>s+90):
+                aa.append(270)
+                s=270
+                go=True
+            if (s>=270) & (s<360) & (e>s+90):
+                aa.append(0)
+                s=0
+                e=e-360
+                go=True
+
+        aa.append(e)
+
+        bb=BoundBox()
+        for a in aa:
+            bb.updateWithPoint(PointFromVector(self._center,Polar(self._radius,Angle(deg=a))))
+
+        return bb
+
+    @property
     def as_dict(self):
        return dict(pEnd=self._pointEnd.as_dict, pMiddle=self._pointMiddle.as_dict, pStart=self._pointStart.as_dict)
 
@@ -348,6 +457,7 @@ class Arc(Circle):
         return 'arc (start='+repr(self._pointStart)+', middle='+repr(self.pointMiddle)+', end='+repr(self.pointEnd)+' )'
 
 class Path:
+
     def __init__(self,nodes=[],geometries=[]):
         self.nodes=nodes
         self.geometries=geometries
@@ -401,18 +511,28 @@ def AngleFromTwoPoints(p1,p2):
     degree=math.degrees(math.atan2(deltaY,deltaX))
     return Angle(deg=degree)
 
-
 def VectorFromTwoPoints(p1,p2):
     module=math.sqrt(math.pow(p2.x-p1.x,2)+math.pow(p2.y-p1.y,2))
     return Polar(module,AngleFromTwoPoints(p1,p2))
 
-
 def PointFromVector(p,v):
     return Point(p.x+v.module*math.cos(v.angle.rad),p.y+v.module*math.sin(v.angle.rad))
+
+def TriangleOrientation(p1, p2, p3):
+    o=((p3.x-p1.x) * (p2.y-p1.y))-((p2.x-p1.x) * (p3.y-p1.y))
+    return (o>0) - (o<0)
+
+def NormalizeAngle(a):
+    n=a.deg-int(a.deg/360)*360
+    if n<0:n=n+360
+    a.deg=n
+    return a
 
 def DetMatrix3x3(A,B,C):
     return A[0]*(B[1]*C[2]-B[2]*C[1])+ \
            A[1]*(B[2]*C[0]-B[0]*C[2])+ \
            A[2]*(B[0]*C[1]-B[1]*C[0])
+
+
 
 
