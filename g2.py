@@ -534,5 +534,15 @@ def DetMatrix3x3(A,B,C):
            A[2]*(B[0]*C[1]-B[1]*C[0])
 
 
-
-
+def StepsBetweenAngles(a1,a2,d):
+    a1=NormalizeAngle(a1)
+    a2=NormalizeAngle(a2)
+    angles=[a1]
+    if a2.deg>a1.deg:step=(a2.deg-a1.deg)/d
+    else:  step=(a2.deg+360-a1.deg)/d
+    for i in range(1,d):
+        s=a1.deg+step*i
+        if s>360:s=s-360
+        angles.append(Angle(deg=s))
+    angles.append(a2)
+    return angles
