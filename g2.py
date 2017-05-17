@@ -84,6 +84,12 @@ class Angle:
             self.parent.angle=Angle(rad=value,parent=self.parent)
         self._rad = value
         self._deg = math.degrees(value)
+        
+    @property
+    def normalized(self):
+        n=self._deg-int(self._deg/360)*360
+        if n<0:n=n+360
+        return Angle(deg=n)
 
     @property
     def as_dict(self):
@@ -164,6 +170,9 @@ class BoundBox:
         if p.x<self.bottomleft.x:self.bottomleft.x=p.x
         if p.y>self.topright.y:self.topright.y=p.y
         if p.y<self.bottomleft.y:self.bottomleft.y=p.y
+        
+    def __repr__(self):
+        return 'BoundBox(bottomleft='+str(self.bottomleft)+', toprigth='+str(self.topright)+')'
 
 
 class Line:
@@ -329,6 +338,7 @@ class Arc(Circle):
         self._pointStart.node=cNode(self,'pointStart')
         self._pointEnd.node=cNode(self,'pointEnd')
         self._pointMiddle.node=cNode(self,'pointMiddle')
+        self._boundBox=BoundBox(pointStart,pointStart)
         self.updateArc()
 
     @property
@@ -386,7 +396,8 @@ class Arc(Circle):
 
         self.radius=VectorFromTwoPoints(self._center,self._pointStart).module
         #self.direction=TriangleDirection()
-
+        self.updateBoundBox()
+        
     @property
     def angleStart(self):
         return VectorFromTwoPoints(self._center,self._pointStart).angle
@@ -411,31 +422,34 @@ class Arc(Circle):
 
     @property
     def boundBox(self):
+        return self._boundBox
+        
+    def updateBoundBox(self):    
 
         if TriangleOrientation(self._pointStart,self._pointMiddle,self._pointEnd)==1:
-            s=NormalizeAngle(self.angleEnd).deg
+            s=self.angleEnd.normalized.deg
         else:
-            s=NormalizeAngle(self.angleStart).deg
+            s=self.angleStart.normalized.deg
 
         e=s+abs(self.angle.deg)
-
+    
         aa=[s]
         go=True
         while go:
             go=False
-            if (s>=0) & (s<90) & (e>s+90):
+            if (s>=0) & (s<90) & (s<e) & (e>90):
                 aa.append(90)
                 s=90
                 go=True
-            if (s>=90) & (s<180) & (e>s+90):
+            if (s>=90) & (s<180) & (s<e) & (e>180):
                 aa.append(180)
                 s=180
                 go=True
-            if (s>=180) & (s<270) & (e>s+90):
+            if (s>=180) & (s<270) & (s<e) & (e>270):
                 aa.append(270)
                 s=270
                 go=True
-            if (s>=270) & (s<360) & (e>s+90):
+            if (s>=270) & (s<360) & (s<e) & (e>360):
                 aa.append(0)
                 s=0
                 e=e-360
@@ -443,11 +457,12 @@ class Arc(Circle):
 
         aa.append(e)
 
-        bb=BoundBox()
+        newBoundBox=Line(self._pointStart,self._pointEnd).boundBox
         for a in aa:
-            bb.updateWithPoint(PointFromVector(self._center,Polar(self._radius,Angle(deg=a))))
+            newBoundBox.updateWithPoint(PointFromVector(self._center,Polar(self._radius,Angle(deg=a))))
 
-        return bb
+        self._boundBox=newBoundBox    
+
 
     @property
     def as_dict(self):
@@ -522,21 +537,14 @@ def TriangleOrientation(p1, p2, p3):
     o=((p3.x-p1.x) * (p2.y-p1.y))-((p2.x-p1.x) * (p3.y-p1.y))
     return (o>0) - (o<0)
 
-def NormalizeAngle(a):
-    n=a.deg-int(a.deg/360)*360
-    if n<0:n=n+360
-    a.deg=n
-    return a
-
 def DetMatrix3x3(A,B,C):
     return A[0]*(B[1]*C[2]-B[2]*C[1])+ \
            A[1]*(B[2]*C[0]-B[0]*C[2])+ \
            A[2]*(B[0]*C[1]-B[1]*C[0])
 
-
 def StepsBetweenAngles(a1,a2,d):
-    a1=NormalizeAngle(a1)
-    a2=NormalizeAngle(a2)
+    a1=a1.normalized
+    a2=a2.normalized
     angles=[a1]
     if a2.deg>a1.deg:step=(a2.deg-a1.deg)/d
     else:  step=(a2.deg+360-a1.deg)/d
