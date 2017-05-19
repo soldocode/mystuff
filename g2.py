@@ -53,7 +53,7 @@ class Point:
        return 'Point (X='+str(self._x)+', Y='+str(self._y)+')'
 
 
-
+       
 class Angle:
     def __init__(self, deg=None, rad=None, parent=None):
         if deg is not None:
@@ -561,14 +561,44 @@ class Path:
             compute_len_old+=0.0000000001    
             result=self.geo(i-1).pointAt(value-compute_len_old)    
         return result
+     
         
     def appendGeo(self,element):
+        self._chain+=element
         self.update()
+        
         
     def insertGeo(self,element,idGeo):
+        cc=self._chain.copy()
+        i=1
+        while idGeo>0:
+            cc.pop(0)
+            g=cc.pop(0)
+            if g=='Arc':
+                cc.pop(0)
+                i=i+3
+            else:
+                i=i+2
+            idGeo-=1
+        self._chain[i:1]=element
         self.update()
         
-    def deleteGeo (self,idGeo):
+        
+    def removeGeo (self,idGeo):
+        cc=self._chain.copy()
+        i=1
+        while idGeo>0:
+            cc.pop(0)
+            g=cc.pop(0)
+            if g=='Arc':
+                cc.pop(0)
+                i=i+3
+            else:
+                i=i+2
+            idGeo-=1
+        self._chain.pop(i)
+        self._chain.pop(i)
+        if g=='Arc': self._chain.pop()
         self.update()
         
     
