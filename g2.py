@@ -194,6 +194,13 @@ class Line:
         self._polar.parent=self._delta.parent=self
         self._p1.node=cNode(parent=self,child='p1')
         self._p2.node=cNode(parent=self,child='p2')
+        
+    def pointAt(self,value):
+        result=None
+        if (value>=0.0) and (value<=self._polar.module):
+            l=Line(self._p1,Polar(value,self._polar.angle))
+            result=l.p2
+        return result
 
     @property
     def p1(self):
@@ -276,6 +283,13 @@ class Circle:
     def __init__(self,center=Point(),radius=0.0):
         self._center=center
         self._radius=radius
+        
+    def pointAt(self,value):
+        result=None
+        if (value>=0.0) and (value<=self.lenght):
+            l=Line(self._center,Polar(self._radius,Angle(deg=360/self.lenght*value)))
+            result=l.p2
+        return result    
 
     @property
     def center(self):
@@ -340,6 +354,14 @@ class Arc(Circle):
         self._pointMiddle.node=cNode(self,'pointMiddle')
         self._boundBox=BoundBox(pointStart,pointStart)
         self.updateArc()
+        
+    def pointAt(self,value):
+        result=None
+        if (value>=0.0) and (value<=self.lenght):
+            a=self.angleStart.deg+(self.angle.deg/self.lenght)*value
+            l=Line(self._center,Polar(self._radius,Angle(deg=a)))
+            result=l.p2
+        return result      
 
     @property
     def pointStart(self):
@@ -424,9 +446,13 @@ class Arc(Circle):
     def boundBox(self):
         return self._boundBox
         
+    @property
+    def orientation(self):
+        return TriangleOrientation(self._pointStart,self._pointMiddle,self._pointEnd)
+        
     def updateBoundBox(self):    
 
-        if TriangleOrientation(self._pointStart,self._pointMiddle,self._pointEnd)==1:
+        if self.orientation==1:
             s=self.angleEnd.normalized.deg
         else:
             s=self.angleStart.normalized.deg
@@ -472,33 +498,103 @@ class Arc(Circle):
         return 'arc (start='+repr(self._pointStart)+', middle='+repr(self.pointMiddle)+', end='+repr(self.pointEnd)+' )'
 
 class Path:
-
-    def __init__(self,nodes=[],geometries=[]):
+    def __init__(self,nodes=[],chain=[]):
         self.nodes=nodes
-        self.geometries=geometries
-
+        self._chain=chain
+        self._geometries=[]
+        self._lenght=0
+        self.update()
+  
+    
     def update(self):
-        for geo in self.geometries:
-            a=geo # to do
-        self._boundBox=[Point(),Point()]  #compute bound_box
-        self._lenght=0  #compute lenght
+        gg=[]
+        cc=self._chain.copy()
+        if len(cc)>0:p1=cc.pop(0)
+        while len(cc)>0:
+            geo=cc.pop(0)
+            p2=cc.pop(0)
+            if geo=='Arc': 
+                p3=cc.pop(0)
+                gg.append([geo,p1,p2,p3])
+                p1=p3
+            else :
+                gg.append([geo,p1,p2])
+                p1=p2
 
+        self._geometries=gg        
+
+        cbb=BoundBox()
+        cl=0
+        l=len(gg)
+        if l>0:
+            cbb=self.geo(0).boundBox
+            cl=self.geo(0).lenght
+            for g in range(1,l):
+                g_bb=self.geo(g).boundBox
+                cbb.updateWithPoint(g_bb.bottomleft)
+                cbb.updateWithPoint(g_bb.topright)
+                cl+=self.geo(g).lenght
+        self._boundBox=cbb
+        self._lenght=cl 
+        
+  
+    def geo(self,id_geometry):
+        g=''
+        nn=[]
+        if id_geometry<len(self._geometries)+1:
+            g=self._geometries[id_geometry][0]
+            for n in self._geometries[id_geometry][1:]:
+                nn.append(self.nodes[n])
+        return Geo(g,nn)     
+
+        
+    def pointAt(self,value):
+        result=None
+        if (value>=0.0) and (value<=self.lenght):
+            i=0
+            compute_len=0
+            compute_len_old=0       
+            while (compute_len<value) and (i<len(self._geometries)):
+                compute_len_old=compute_len
+                compute_len+=self.geo(i).lenght
+                i=i+1 
+            compute_len_old+=0.0000000001    
+            result=self.geo(i-1).pointAt(value-compute_len_old)    
+        return result
+        
+    def appendGeo(self,element):
+        self.update()
+        
+    def insertGeo(self,element,idGeo):
+        self.update()
+        
+    def deleteGeo (self,idGeo):
+        self.update()
+        
+    
+    @property
+    def geometries(self):
+        return self._geometries
+        
     @property
     def boundBox(self):
         return self._boundBox
 
     @property
     def lenght(self):
-        return self._length
+        return self._lenght
 
     @property
     def as_dict(self):
         nodes=[]
         for node in self.nodes:
             nodes.append(node.as_dict)
+        return dict(nodes=nodes, geometries=self._geometries)
+        
+    def __repr__(self):
+        return 'Path (boundBox='+repr(self._boundBox)+', lenght='+repr(self._lenght)+' )'       
 
-        return dict(nodes=nodes, geometries=self.geometries)
-
+        
 class Shape:
     def __init__(self,outline=Path(),child=[],boundBox=[Point(),Point()]):
         self.outline=outline
@@ -519,7 +615,11 @@ class Shape:
     def area(self):
         return self._area
 
-
+        
+def Geo (geometry,nodes):
+    makeGeo={'Line':Line,'Circle':Circle,'Arc':Arc}
+    return makeGeo[geometry](*nodes)
+        
 def AngleFromTwoPoints(p1,p2):
     deltaX=float(p2.x-p1.x)
     deltaY=float(p2.y-p1.y)
