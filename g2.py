@@ -1,9 +1,9 @@
 
-################################################################################
+###############################################################################
 # g2.py - 2d framework module - 2017
 #
 # Riccardo Soldini - riccardo.soldini@gmail.com
-################################################################################
+###############################################################################
 
 
 import math
@@ -280,9 +280,12 @@ class Line:
         return 'Line ('+repr(self._p1)+', '+repr(self._p2)+')'
 
 class Circle:
-    def __init__(self,center=Point(),radius=0.0):
+    def __init__(self,center=Point(),arg=0.0):
         self._center=center
-        self._radius=radius
+        if type(arg)==Point:
+            self._radius=Line(center,arg).polar.module
+        else:
+            self._radius=arg
         
     def pointAt(self,value):
         result=None
@@ -325,6 +328,10 @@ class Circle:
     @property
     def lenght(self):
         return self._radius*math.pi*2
+       
+    @property    
+    def area(self):
+        return math.pow(self._radius,2)*math.pi    
 
     @property
     def boundBox(self):
@@ -613,6 +620,47 @@ class Path:
     @property
     def lenght(self):
         return self._lenght
+        
+    @property
+    def isClosed(self):        
+        result=False
+        if self._chain[0]==self._chain[-1]:result=True
+        if self._chain[1]=='Circle':result=True
+        return result
+        
+    @property
+    def orientation(self):  #to be fixed
+        result=1
+        p1=self._chain[0]
+        for geo in self._geometries:
+           result*=Triangle(self.nodes[p1],
+                            self.nodes[geo[1]],
+                            self.nodes[geo[2]]).orientation
+           if geo[0]=='Arc':
+                result*=Triangle(self.nodes[p1],
+                                 self.nodes[geo[2]],
+                                 self.nodes[geo[3]]).orientation
+        return result     
+        
+    @property
+    def area(self):
+        if self.isClosed:
+            if self._chain[1]=='Circle':
+                result=self.geo(0).area
+            else:
+                result=0
+                p1=self._chain[0]
+                for geo in self._geometries:
+                    result+=Triangle(self.nodes[p1],
+                                     self.nodes[geo[1]],
+                                     self.nodes[geo[2]]).area
+                    if geo[0]=='Arc':
+                       result+=Triangle(self.nodes[p1],
+                                        self.nodes[geo[2]],
+                                        self.nodes[geo[3]]).area
+        else:
+            result=0
+        return result    
 
     @property
     def as_dict(self):
@@ -626,13 +674,22 @@ class Path:
 
         
 class Shape:
-    def __init__(self,outline=Path(),child=[],boundBox=[Point(),Point()]):
+    def __init__(self,outline=Path(),internal=[],boundBox=[Point(),Point()]):
         self.outline=outline
-        self.child=child
+        self.internal=internal
         self._boundBox=boundBox
-        self._perimeter=0
-        self._area=0
+        self._perimeter={'outline':0,'internal':[]}
+        self._area={'outline':0,'internal':[]}
+        self.update()
 
+    def update(self):
+        self._perimeter['outline']=self.outline.lenght
+        for contour in self.internal:
+            self._perimeter['internal'].append(contour.lenght)
+        self._area['outline']=self.outline.area
+        for contour in self.internal:
+            self._area['internal'].append(contour.area)
+            
     @property
     def boundBox(self):
         return self._boundBox
@@ -645,6 +702,30 @@ class Shape:
     def area(self):
         return self._area
 
+        
+class Triangle:
+    def __init__(self,p1=Point(),p2=Point(),p3=Point()):
+        self.p1=p1
+        self.p2=p2
+        self.p3=p3
+      
+    @property
+    def orientation(self):
+        o=((self.p3._x-self.p1._x) * (self.p2._y-self.p1._y))
+        o-= ((self.p2._x-self.p1._x) * (self.p3._y-self.p1._y))
+        return (o>0) - (o<0)
+    
+    @property
+    def area(self):
+        a=[self.p1._x,self.p1._y,1]
+        b=[self.p2._x,self.p2._y,1]
+        c=[self.p3._x,self.p3._y,1]
+        return 0.5*DetMatrix3x3(a,b,c)  
+        
+    def __repr__(self):
+        return 'Triangle (p1='+repr(self.p1)+', p2='+repr(self.p2)+' ,p3='+repr(self.p3)+')'
+        
+        
         
 def Geo (geometry,nodes):
     makeGeo={'Line':Line,'Circle':Circle,'Arc':Arc}
@@ -671,6 +752,13 @@ def DetMatrix3x3(A,B,C):
     return A[0]*(B[1]*C[2]-B[2]*C[1])+ \
            A[1]*(B[2]*C[0]-B[0]*C[2])+ \
            A[2]*(B[0]*C[1]-B[1]*C[0])
+           
+def TriangleArea(p1,p2,p3):
+    a=[p1.x,p1.y,1]
+    b=[p2.x,p2.y,1]
+    c=[p3.x,p3.y,1]
+    area=0.5*DetMatrix3x3(a,b,c)
+    return area           
 
 def StepsBetweenAngles(a1,a2,d):
     a1=a1.normalized
