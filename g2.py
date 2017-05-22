@@ -393,7 +393,15 @@ class Arc(Circle):
     def pointMiddle(self,p):
         self._pointMiddle=p
         self.updateArc()
-
+        
+    @property
+    def chord(self):    
+        return Line(self.pointStart,self.pointEnd)
+        
+    @property
+    def segmentArea(self):
+        alfa=self.angle.rad
+        return ((alfa-math.sin(alfa))/2)*math.pow(self._radius,2)
 
     def updateArc(self):
         a=[0,0,0]
@@ -424,7 +432,6 @@ class Arc(Circle):
         self._center.y=detB/detM/2
 
         self.radius=VectorFromTwoPoints(self._center,self._pointStart).module
-        #self.direction=TriangleDirection()
         self.updateBoundBox()
         
     @property
@@ -441,13 +448,13 @@ class Arc(Circle):
         e=self.angleEnd.deg
         if s<e:s=s+360
         diff=s-e
-        if TriangleOrientation(self._pointStart,self._pointMiddle,self._pointEnd)==-1:
+        if Triangle(self._pointStart,self._pointMiddle,self._pointEnd).orientation==-1:
             diff=diff-360
         return Angle(deg=(-diff))
 
     @property
     def lenght(self):
-        return abs((self._radius*math.pi*2/360.0)*self.angle.deg)
+        return abs(self._radius*self.angle.rad)
 
     @property
     def boundBox(self):
@@ -455,7 +462,7 @@ class Arc(Circle):
         
     @property
     def orientation(self):
-        return TriangleOrientation(self._pointStart,self._pointMiddle,self._pointEnd)
+        return Triangle(self._pointStart,self._pointMiddle,self._pointEnd).orientation
         
     def updateBoundBox(self):    
 
@@ -630,17 +637,19 @@ class Path:
         
     @property
     def orientation(self):  #to be fixed
-        result=1
+        o=0
         p1=self._chain[0]
         for geo in self._geometries:
-           result*=Triangle(self.nodes[p1],
-                            self.nodes[geo[1]],
-                            self.nodes[geo[2]]).orientation
+           print (geo)
+           print(self.nodes[p1],self.nodes[geo[1]],self.nodes[geo[2]])
+           o+=Triangle(self.nodes[p1],
+                       self.nodes[geo[1]],
+                       self.nodes[geo[2]]).orientation
            if geo[0]=='Arc':
-                result*=Triangle(self.nodes[p1],
-                                 self.nodes[geo[2]],
-                                 self.nodes[geo[3]]).orientation
-        return result     
+               o+=Triangle(self.nodes[p1],
+                           self.nodes[geo[1]],
+                           self.nodes[geo[2]]).orientation
+        return (o>0) - (o<0)    
         
     @property
     def area(self):
@@ -651,16 +660,20 @@ class Path:
                 result=0
                 p1=self._chain[0]
                 for geo in self._geometries:
+                    if geo[0]=='Arc':
+                       result+=Triangle(self.nodes[p1],
+                                        self.nodes[geo[1]],
+                                        self.nodes[geo[3]]).area
+                       result+=Arc(self.nodes[geo[1]],
+                                   self.nodes[geo[2]],
+                                   self.nodes[geo[3]]).segmentArea                
                     result+=Triangle(self.nodes[p1],
                                      self.nodes[geo[1]],
                                      self.nodes[geo[2]]).area
-                    if geo[0]=='Arc':
-                       result+=Triangle(self.nodes[p1],
-                                        self.nodes[geo[2]],
-                                        self.nodes[geo[3]]).area
+                    
         else:
             result=0
-        return result    
+        return abs(result)    
 
     @property
     def as_dict(self):
@@ -744,21 +757,21 @@ def VectorFromTwoPoints(p1,p2):
 def PointFromVector(p,v):
     return Point(p.x+v.module*math.cos(v.angle.rad),p.y+v.module*math.sin(v.angle.rad))
 
-def TriangleOrientation(p1, p2, p3):
-    o=((p3.x-p1.x) * (p2.y-p1.y))-((p2.x-p1.x) * (p3.y-p1.y))
-    return (o>0) - (o<0)
+#def TriangleOrientation(p1, p2, p3):
+#    o=((p3.x-p1.x) * (p2.y-p1.y))-((p2.x-p1.x) * (p3.y-p1.y))
+#    return (o>0) - (o<0)
 
 def DetMatrix3x3(A,B,C):
     return A[0]*(B[1]*C[2]-B[2]*C[1])+ \
            A[1]*(B[2]*C[0]-B[0]*C[2])+ \
            A[2]*(B[0]*C[1]-B[1]*C[0])
            
-def TriangleArea(p1,p2,p3):
-    a=[p1.x,p1.y,1]
-    b=[p2.x,p2.y,1]
-    c=[p3.x,p3.y,1]
-    area=0.5*DetMatrix3x3(a,b,c)
-    return area           
+#def TriangleArea(p1,p2,p3):
+#    a=[p1.x,p1.y,1]
+#    b=[p2.x,p2.y,1]
+#    c=[p3.x,p3.y,1]
+#    area=0.5*DetMatrix3x3(a,b,c)
+#    return area           
 
 def StepsBetweenAngles(a1,a2,d):
     a1=a1.normalized
