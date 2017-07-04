@@ -524,7 +524,8 @@ class Path:
     
     def update(self):
         gg=[]
-        cc=self._chain.copy()
+        # cc=self._chain.copy()--> run only wirh 3.x
+        cc=list(self._chain) # --> try with 2.7
         if len(cc)>0:p1=cc.pop(0)
         while len(cc)>0:
             geo=cc.pop(0)
