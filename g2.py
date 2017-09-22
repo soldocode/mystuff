@@ -6,7 +6,7 @@
 ###############################################################################
 
 
-import math
+import math, sympy
 
 
 class cNode:
@@ -44,13 +44,17 @@ class Point:
             self.node.parent.__setattr__(self.node.child,Point(x=self._x,y=y))
         else:
             self._y = y
+            
+    @property
+    def to_sympy(self):
+        return sympy.Point2D(self._x,self._y)         
 
     @property
     def as_dict(self):
-       return dict(y=self._y, x=self._x)
+        return dict(y=self._y, x=self._x)
 
     def __repr__(self):
-       return 'Point (x='+str(self._x)+', y='+str(self._y)+')'
+        return 'Point (x='+str(self._x)+', y='+str(self._y)+')'
 
 
        
@@ -275,6 +279,10 @@ class Line:
         return BoundBox(bottom_left,top_right)
 
     @property
+    def to_sympy(self):
+        return sympy.Line(self._p1.to_sympy,self.p2.to_sympy)
+
+    @property
     def as_dict(self):
         return dict(p2=self._p2.as_dict,p1=self._p1.as_dict)
 
@@ -344,6 +352,10 @@ class Circle:
         return BoundBox(bottom_left,top_right)
 
 
+    @property
+    def to_sympy(self):
+        return sympy.Circle(self._center.to_sympy,self._radius)
+        
     @property
     def as_dict(self):
         return dict(radius=self._radius, center=self._center.as_dict)
@@ -796,3 +808,16 @@ def StepsBetweenAngles(a1,a2,d):
         angles.append(Angle(deg=s))
     angles.append(a2)
     return angles
+
+def CircleToLineIntersection(gCircle,gLine):
+    c=gCircle.to_sympy
+    l=gLine.to_sympy
+    result=[]
+    i=c.intersection(l)
+    if len(i)>0:
+        if Line(gCircle.center,gLine.p1).polar.module>=gCircle.radius:
+            result.append(Point(sympy.N(i[0].x),sympy.N(i[0].y)))
+            
+        if (len(i)>1) & (Line(gCircle.center,gLine.p2).polar.module>=gCircle.radius):
+            result.append(Point(sympy.N(i[1].x),sympy.N(i[1].y)))     
+    return result
