@@ -281,6 +281,14 @@ class Line:
     @property
     def to_sympy(self):
         return sympy.Line(self._p1.to_sympy,self.p2.to_sympy)
+        
+    @property
+    def get_coeff_equation(self):
+        m=math.tan(self._polar.angle.rad)
+        if self._p1.y==self._p2.y:
+            m=0.0
+        q=self._p1.y-m*self._p1.x
+        return dict(m=m,q=q)
 
     @property
     def as_dict(self):
@@ -355,6 +363,13 @@ class Circle:
     @property
     def to_sympy(self):
         return sympy.Circle(self._center.to_sympy,self._radius)
+ 
+    @property
+    def get_coeff_equation(self):
+         a=-2*self._center.x
+         b=-2*self._center.y
+         c=math.pow(self._center.x,2)+math.pow(self._center.y,2)-math.pow(self._radius,2)
+         return dict(a=a,b=b,c=c)
         
     @property
     def as_dict(self):
@@ -809,15 +824,62 @@ def StepsBetweenAngles(a1,a2,d):
     angles.append(a2)
     return angles
 
-def CircleToLineIntersection(gCircle,gLine):
-    c=gCircle.to_sympy
-    l=gLine.to_sympy
+    
+def IntersectionCircleToLine(circle,line):
+    
     result=[]
-    i=c.intersection(l)
-    if len(i)>0:
-        if Line(gCircle.center,gLine.p1).polar.module>=gCircle.radius:
-            result.append(Point(sympy.N(i[0].x),sympy.N(i[0].y)))
-            
-        if (len(i)>1) & (Line(gCircle.center,gLine.p2).polar.module>=gCircle.radius):
-            result.append(Point(sympy.N(i[1].x),sympy.N(i[1].y)))     
-    return result
+    xmin=line.boundBox.bottomleft.x
+    ymin=line.boundBox.bottomleft.y
+    xmax=line.boundBox.topright.x
+    ymax=line.boundBox.topright.y
+
+    # (x - xc)^2 + (y - yc)^2 = r^2
+    # x^2+y^2+ax+by+c=0
+    # get a,b,c value of circle equation
+    eqC=circle.get_coeff_equation
+    
+    if line.p1.x==line.p2.x:       
+        # get system equation coefficient
+        A=1
+        B=eqC['b']
+        C=math.pow(line.p1.x,2)+eqC['a']*line.p1.x+eqC['c']
+
+        #solve
+        DELTA=math.pow(B,2)-4*A*C
+        if DELTA>=0:
+            y1=(-B-math.sqrt(DELTA))/(2*A)
+            if y1>=ymin and y1<=ymax:
+                result.append(Point(line.p1.x,y1))
+            if DELTA>0:
+                y2=(-B+math.sqrt(DELTA))/(2*A)
+                if y2>=ymin and y2<=ymax:
+                    result.append(Point(line.p1.x,y2))
+                    
+    else:      
+        # get m,q
+        eqL=line.get_coeff_equation
+
+        # get system equation coefficient
+        A=1+math.pow(eqL['m'],2)
+        B=2*eqL['m']*eqL['q']+eqC['a']+eqC['b']*eqL['m']
+        C=math.pow(eqL['q'],2)+eqC['b']*eqL['q']+eqC['c']
+
+        # solve
+        DELTA=math.pow(B,2)-4*A*C
+        if DELTA>=0:
+            x1=(-B-math.sqrt(DELTA))/(2*A)
+            y1=eqL['m']*x1+eqL['q']
+            if x1>=xmin and x1<=xmax:
+                result.append(Point(x1,y1))
+            if DELTA>0:   
+                x2=(-B+math.sqrt(DELTA))/(2*A)
+                y2=eqL['m']*x2+eqL['q']
+                if x2>=xmin and x2<=xmax:
+                    result.append(Point(x2,y2))
+               
+    # Index adjustment           
+    if len(result)==2:
+        if Line(line.p1,result[0]).polar.module>Line(line.p1,result[1]).polar.module:
+            result.reverse()
+
+    return result  

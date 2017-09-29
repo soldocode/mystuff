@@ -10,8 +10,9 @@ from g2 import *
 
 
 class Scene:
-    def __init__(self,geometries=[]):
+    def __init__(self,geometries=[],area=[-200,200,-200,200]):
         self.geometries=geometries
+        self.area=area
 
     @property
     def as_dict(self):
@@ -19,7 +20,7 @@ class Scene:
        
     def show(self):
         plt.close()
-        plt.axis([-200,200,-200,200])
+        plt.axis(self.area)
         for g in self.geometries:
             plotFunction[type(g[0])](g[0])
         plt.show()
