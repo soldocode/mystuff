@@ -297,10 +297,13 @@ class Line:
     def __repr__(self):
         return 'Line ('+repr(self._p1)+', '+repr(self._p2)+')'
 
+
 class Circle:
     def __init__(self,center=Point(),arg=0.0):
         self._center=center
-        if type(arg)==Point:
+        
+        if arg.__class__.__name__ == 'Point': # --> run both
+        # if type(arg)==Point: # --> run only in 3.x
             self._radius=Line(center,arg).polar.module
         else:
             self._radius=arg
@@ -353,12 +356,9 @@ class Circle:
 
     @property
     def boundBox(self):
-        bottom_left=Point(self._center.x-self._radius,
-                          self._center.y-self._radius)
-        top_right=Point(self._center.x+self._radius,
-                        self._center.y+self._radius)
+        bottom_left=Point(self._center.x-self._radius,self._center.y-self._radius)
+        top_right=Point(self._center.x+self._radius,self._center.y+self._radius)
         return BoundBox(bottom_left,top_right)
-
 
     @property
     def to_sympy(self):
@@ -540,6 +540,7 @@ class Arc(Circle):
     def __repr__(self):
         return 'arc (start='+repr(self._pointStart)+', middle='+repr(self.pointMiddle)+', end='+repr(self.pointEnd)+' )'
 
+
 class Path:
     def __init__(self,nodes=[],chain=[]):
         self._nodes=nodes
@@ -551,7 +552,7 @@ class Path:
     
     def update(self):
         gg=[]
-        # cc=self._chain.copy()--> run only wirh 3.x
+        # cc=self._chain.copy()# --> run only with 3.x
         cc=list(self._chain) # --> try with 2.7
         if len(cc)>0:p1=cc.pop(0)
         while len(cc)>0:
@@ -736,18 +737,20 @@ class Shape:
         self.internal=internal
         self._boundBox=boundBox
         self._perimeter={'outline':0,'internal':[]}
-        self._area={'outline':0,'internal':[]}
+        self._area={'outline':0,'internal':[],'total':0}
         self.update()
 
     def update(self):
         self._perimeter['outline']=self.outline.lenght
-        self._area['outline']=self.outline.area
+        area=self._area['outline']=self.outline.area
         self._boundBox=self.outline.boundBox
         for contour in self.internal:
             self._perimeter['internal'].append(contour.lenght)
             self._area['internal'].append(contour.area)
+            area-=contour.area
             self._boundBox.updateWithPoint(contour.boundBox.bottomleft)
             self._boundBox.updateWithPoint(contour.boundBox.topright) 
+        self._area['total']=area    
             
     @property
     def boundBox(self):
