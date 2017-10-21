@@ -736,21 +736,23 @@ class Shape:
         self.outline=outline
         self.internal=internal
         self._boundBox=boundBox
-        self._perimeter={'outline':0,'internal':[]}
+        self._perimeter={'outline':0,'internal':[],'total':0}
         self._area={'outline':0,'internal':[],'total':0}
         self.update()
 
     def update(self):
-        self._perimeter['outline']=self.outline.lenght
+        perimeter=self._perimeter['outline']=self.outline.lenght
         area=self._area['outline']=self.outline.area
         self._boundBox=self.outline.boundBox
         for contour in self.internal:
             self._perimeter['internal'].append(contour.lenght)
             self._area['internal'].append(contour.area)
             area-=contour.area
+            perimeter+=contour.lenght
             self._boundBox.updateWithPoint(contour.boundBox.bottomleft)
             self._boundBox.updateWithPoint(contour.boundBox.topright) 
-        self._area['total']=area    
+        self._area['total']=area
+        self._perimeter['total']=perimeter    
             
     @property
     def boundBox(self):
