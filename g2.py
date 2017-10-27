@@ -170,12 +170,21 @@ class BoundBox:
     def __init__(self,bottomleft=Point(),topright=Point()):
         self.bottomleft=bottomleft
         self.topright=topright
+        self.area=0
+        self.updateArea()
 
     def updateWithPoint(self,p):
         if p.x>self.topright.x:self.topright.x=p.x
         if p.x<self.bottomleft.x:self.bottomleft.x=p.x
         if p.y>self.topright.y:self.topright.y=p.y
         if p.y<self.bottomleft.y:self.bottomleft.y=p.y
+        self.updateArea()
+        
+    def updateArea(self):
+        dx=self.topright.x-self.bottomleft.x
+        dy=self.topright.y-self.bottomleft.y
+        self.area=dx*dy
+        return
         
     def __repr__(self):
         return 'BoundBox(bottomleft='+str(self.bottomleft)+', toprigth='+str(self.topright)+')'
