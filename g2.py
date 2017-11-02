@@ -6,17 +6,16 @@
 ###############################################################################
 
 
-import math, sympy
+import math, sympy, json
 
 
 class cNode:
     def __init__(self,parent=None,child=None):
         self.parent=parent
         self.child=child
-
-    @property
-    def as_dict(self):
-       return dict(parent=self.parent,child=self.child)
+       
+    def toJson(self):
+        return json.dumps(self.__dict__)
 
 
 class Point:
@@ -45,13 +44,17 @@ class Point:
         else:
             self._y = y
             
+            
     @property
     def to_sympy(self):
         return sympy.Point2D(self._x,self._y)         
 
     @property
-    def as_dict(self):
-        return dict(y=self._y, x=self._x)
+    def __dict__(self):
+        return dict(Y=self._y, X=self._x)
+        
+    def toJson(self):
+        return json.dumps(self.__dict__)        
 
     def __repr__(self):
         return 'Point (x='+str(self._x)+', y='+str(self._y)+')'
@@ -98,7 +101,7 @@ class Angle:
         return Angle(deg=n)
 
     @property
-    def as_dict(self):
+    def __dict__(self):
        return dict(deg=self._deg)
 
     def __repr__(self):
@@ -186,6 +189,16 @@ class BoundBox:
         self.area=dx*dy
         return
         
+    @property
+    def __dict__(self):
+       result={}
+       result['BottomLeft']=self.bottomleft.as_dict
+       result['TopRight']=self.topright.as_dict              
+       return result
+       
+    def toJson(self):
+        return json.dumps(self.__dict__)
+       
     def __repr__(self):
         return 'BoundBox(bottomleft='+str(self.bottomleft)+', toprigth='+str(self.topright)+')'
 
@@ -300,8 +313,11 @@ class Line:
         return dict(m=m,q=q)
 
     @property
-    def as_dict(self):
-        return dict(p2=self._p2.as_dict,p1=self._p1.as_dict)
+    def __dict__(self):
+        return dict(geo='Line',p2=self._p2.__dict__,p1=self._p1.__dict__)
+        
+    def toJson(self):
+        return json.dump(self.__dict__)
 
     def __repr__(self):
         return 'Line ('+repr(self._p1)+', '+repr(self._p2)+')'
@@ -381,8 +397,11 @@ class Circle:
          return dict(a=a,b=b,c=c)
         
     @property
-    def as_dict(self):
-        return dict(radius=self._radius, center=self._center.as_dict)
+    def __dict__(self):
+        return dict(geo='Circle',radius=self._radius, center=self._center.__dict__)
+        
+    def toJson(self):
+        return json.dumps(self.__dict__)
 
     def __repr__(self):
         return 'circle (center='+repr(self._center)+', radius='+repr(self.radius)+' )'
@@ -541,11 +560,13 @@ class Arc(Circle):
 
         self._boundBox=newBoundBox    
 
-
     @property
-    def as_dict(self):
-       return dict(pEnd=self._pointEnd.as_dict, pMiddle=self._pointMiddle.as_dict, pStart=self._pointStart.as_dict)
+    def __dict__(self):
+       return dict(geo='Arc',pEnd=self._pointEnd.__dict__, pMiddle=self._pointMiddle.__dict__, pStart=self._pointStart.__dict__)
 
+    def toJson(self):
+        return json.dump(self.__dict__)
+        
     def __repr__(self):
         return 'arc (start='+repr(self._pointStart)+', middle='+repr(self.pointMiddle)+', end='+repr(self.pointEnd)+' )'
 
@@ -730,10 +751,10 @@ class Path:
         return abs(result)    
 
     @property
-    def as_dict(self):
+    def __dict__(self):
         nodes=[]
         for node in self._nodes:
-            nodes.append(node.as_dict)
+            nodes.append(node.__dict__)
         return dict(nodes=nodes, geometries=self._geometries)
         
     def __repr__(self):
@@ -774,6 +795,19 @@ class Shape:
     @property
     def area(self):
         return self._area
+        
+    @property
+    def __dict__(self):
+        result={}
+        result['Outline']=self.outline.__dict__
+        internal=[]
+        for i in self.internal:
+            internal.append(i.__dict__)
+        result['Internal']=internal    
+        return result
+        
+    def toJson(self):
+        return json.dumps(self.__dict__)
         
     def __repr__(self):
         return 'Shape (boundBox='+repr(self.boundBox)+')'
