@@ -7,6 +7,12 @@
 
 
 import math, sympy, json
+from dxfwrite import DXFEngine as dxf
+import sys
+if sys.version_info[0]==3:
+    import io
+else:    
+    import cStringIO as io
 
 
 class cNode:
@@ -229,6 +235,10 @@ class Line:
             l=Line(self._p1,Polar(value,self._polar.angle))
             result=l.p2
         return result
+    
+    def writeDXF(self,dwg):
+        dwg.add(dxf.line((self._p1._x,self._p1._y,
+                          self._p2._x,self._p2._y)))
 
     @property
     def p1(self):
@@ -931,3 +941,46 @@ def IntersectionCircleToLine(circle,line):
             result.reverse()
 
     return result  
+
+class Drawing:
+    
+    def __init__(self):
+        self.Scene={}
+        self._boundBox=BoundBox()
+        self.update()
+        
+    def update(self):
+        bb=BoundBox()
+        l=len(self.Scene)
+        if l>0:
+            ls=list(self.Scene)
+            bb=self.Scene[ls[0]]['Geo'].boundBox
+            for g in ls:
+                g_bb=self.Scene[g]['Geo'].boundBox
+                bb.updateWithPoint(g_bb.bottomleft)
+                bb.updateWithPoint(g_bb.topright)
+        self._boundBox=bb        
+        return
+        
+    @property
+    def boundBox(self):
+        return self._boundBox
+        
+    def insertGeo(self,id,geo,position=Point(0,0),rotation=Angle(0)):
+        self.Scene[id]={'Geo':geo,'Position':position,'Rotation':rotation}
+        self.update()
+        
+    def getDXF(self):
+        output = io.StringIO()
+        drawing = dxf.drawing('drawing.dxf')
+        for id in self.Scene:
+            geo=self.Scene[id]['Geo']
+            geo_class=geo.__class__.__name__
+            ### develop code for writing in DXF file
+            
+        drawing.save_to_fileobj(output)
+        dxf_result=output.getvalue()
+        return dxf_result
+    
+   
+    
