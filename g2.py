@@ -236,9 +236,9 @@ class Line:
             result=l.p2
         return result
     
-    def writeDXF(self,dwg):
-        dwg.add(dxf.line((self._p1._x,self._p1._y,
-                          self._p2._x,self._p2._y)))
+    def writeDXF(self,dwg,pos=Point(0,0)):
+        dwg.add(dxf.line((self._p1._x+pos.x,self._p1._y+pos.y),
+                          (self._p2._x+pos.x,self._p2._y+pos.y)))
 
     @property
     def p1(self):
@@ -349,6 +349,10 @@ class Circle:
             l=Line(self._center,Polar(self._radius,Angle(deg=360/self.lenght*value)))
             result=l.p2
         return result    
+        
+    def writeDXF(self,dwg,pos=Point(0,0)):
+        dwg.add(dxf.circle(self._radius,(self._center._x+pos.x,self._center._y+pos.y)))
+        return
 
     @property
     def center(self):
@@ -437,6 +441,19 @@ class Arc(Circle):
             result=l.p2
         return result      
 
+    def writeDXF(self,dwg,pos=Point(0,0)):
+        if self.orientation>0:
+            dwg.add(dxf.arc(self._radius,
+                            (self._center._x+pos.x,self._center._y+pos.y),
+                            self.angleEnd.deg,
+                            self.angleStart.deg))
+        else:
+            dwg.add(dxf.arc(self._radius,
+                            (self._center._x+pos.x,self._center._y+pos.y),
+                            self.angleStart.deg,
+                            self.angleEnd.deg)) 
+        return
+        
     @property
     def pointStart(self):
         return self._pointStart
@@ -623,6 +640,12 @@ class Path:
         self._lenght=cl 
         
   
+    def writeDXF(self,dwg,pos=Point(0,0)):
+        for i in range(0,len(self._geometries)):
+            self.geo(i).writeDXF(dwg,pos)
+        return
+       
+        
     def geo(self,id_geometry):
         g=''
         nn=[]
@@ -792,7 +815,13 @@ class Shape:
             self._boundBox.updateWithPoint(contour.boundBox.bottomleft)
             self._boundBox.updateWithPoint(contour.boundBox.topright) 
         self._area['total']=area
-        self._perimeter['total']=perimeter    
+        self._perimeter['total']=perimeter   
+
+    def writeDXF(self,dwg,pos=Point(0,0)):
+        self.outline.writeDXF(dwg,pos)
+        for p in self.internal:
+            p.writeDXF(dwg,pos)
+        return
             
     @property
     def boundBox(self):
@@ -967,6 +996,7 @@ class Drawing:
         return self._boundBox
         
     def insertGeo(self,id,geo,position=Point(0,0),rotation=Angle(0)):
+        ## rotation for the moment not considered!!!!!!
         self.Scene[id]={'Geo':geo,'Position':position,'Rotation':rotation}
         self.update()
         
@@ -975,8 +1005,9 @@ class Drawing:
         drawing = dxf.drawing('drawing.dxf')
         for id in self.Scene:
             geo=self.Scene[id]['Geo']
-            geo_class=geo.__class__.__name__
-            ### develop code for writing in DXF file
+            ##geo_class=geo.__class__.__name__
+            geo.writeDXF(drawing,self.Scene[id]['Position'])
+            
             
         drawing.save_to_fileobj(output)
         dxf_result=output.getvalue()
