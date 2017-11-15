@@ -21,8 +21,9 @@ class Scene:
     def show(self):
         plt.close()
         plt.axis(self.area)
-        for g in self.geometries:
-            plotFunction[type(g[0])](g[0])
+        for block in self.geometries:
+            for g in block:
+                plotFunction[g.__class__.__name__](g)
         plt.show()
            
     def reset(self):
@@ -43,4 +44,4 @@ def plot_a_point(p=Point(0,0)):
     return    
   
     
-plotFunction={Point:plot_a_point,Line:plot_a_line,Circle:plot_a_circle}
+plotFunction={'Point':plot_a_point,'Line':plot_a_line,'Circle':plot_a_circle}
