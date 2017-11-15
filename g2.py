@@ -11,7 +11,7 @@ from dxfwrite import DXFEngine as dxf
 import sys
 if sys.version_info[0]==3:
     import io
-else:    
+else:
     import cStringIO as io
 
 
@@ -19,7 +19,7 @@ class cNode:
     def __init__(self,parent=None,child=None):
         self.parent=parent
         self.child=child
-       
+
     def toJson(self):
         return json.dumps(self.__dict__)
 
@@ -49,24 +49,24 @@ class Point:
             self.node.parent.__setattr__(self.node.child,Point(x=self._x,y=y))
         else:
             self._y = y
-            
-            
+
+
     @property
     def to_sympy(self):
-        return sympy.Point2D(self._x,self._y)         
+        return sympy.Point2D(self._x,self._y)
 
     @property
     def __dict__(self):
         return dict(Y=self._y, X=self._x)
-        
+
     def toJson(self):
-        return json.dumps(self.__dict__)        
+        return json.dumps(self.__dict__)
 
     def __repr__(self):
         return 'Point (x='+str(self._x)+', y='+str(self._y)+')'
 
 
-       
+
 class Angle:
     def __init__(self, deg=None, rad=None, parent=None):
         self._deg=0
@@ -99,7 +99,7 @@ class Angle:
             self.parent.angle=Angle(rad=value,parent=self.parent)
         self._rad = value
         self._deg = math.degrees(value)
-        
+
     @property
     def normalized(self):
         n=self._deg-int(self._deg/360)*360
@@ -188,23 +188,23 @@ class BoundBox:
         if p.y>self.topright.y:self.topright.y=p.y
         if p.y<self.bottomleft.y:self.bottomleft.y=p.y
         self.updateArea()
-        
+
     def updateArea(self):
         dx=self.topright.x-self.bottomleft.x
         dy=self.topright.y-self.bottomleft.y
         self.area=dx*dy
         return
-        
+
     @property
     def __dict__(self):
        result={}
        result['BottomLeft']=self.bottomleft.as_dict
-       result['TopRight']=self.topright.as_dict              
+       result['TopRight']=self.topright.as_dict
        return result
-       
+
     def toJson(self):
         return json.dumps(self.__dict__)
-       
+
     def __repr__(self):
         return 'BoundBox(bottomleft='+str(self.bottomleft)+', toprigth='+str(self.topright)+')'
 
@@ -228,14 +228,14 @@ class Line:
         self._polar.parent=self._delta.parent=self
         self._p1.node=cNode(parent=self,child='p1')
         self._p2.node=cNode(parent=self,child='p2')
-        
+
     def pointAt(self,value):
         result=None
         if (value>=0.0) and (value<=self._polar.module):
             l=Line(self._p1,Polar(value,self._polar.angle))
             result=l.p2
         return result
-    
+
     def writeDXF(self,dwg,pos=Point(0,0)):
         dwg.add(dxf.line((self._p1._x+pos.x,self._p1._y+pos.y),
                           (self._p2._x+pos.x,self._p2._y+pos.y)))
@@ -313,7 +313,7 @@ class Line:
     @property
     def to_sympy(self):
         return sympy.Line(self._p1.to_sympy,self.p2.to_sympy)
-        
+
     @property
     def get_coeff_equation(self):
         m=math.tan(self._polar.angle.rad)
@@ -325,7 +325,7 @@ class Line:
     @property
     def __dict__(self):
         return dict(geo='Line',p2=self._p2.__dict__,p1=self._p1.__dict__)
-        
+
     def toJson(self):
         return json.dump(self.__dict__)
 
@@ -336,20 +336,20 @@ class Line:
 class Circle:
     def __init__(self,center=Point(),arg=0.0):
         self._center=center
-        
+
         if arg.__class__.__name__ == 'Point': # --> run both
         # if type(arg)==Point: # --> run only in 3.x
             self._radius=Line(center,arg).polar.module
         else:
             self._radius=arg
-        
+
     def pointAt(self,value):
         result=None
         if (value>=0.0) and (value<=self.lenght):
             l=Line(self._center,Polar(self._radius,Angle(deg=360/self.lenght*value)))
             result=l.p2
-        return result    
-        
+        return result
+
     def writeDXF(self,dwg,pos=Point(0,0)):
         dwg.add(dxf.circle(self._radius,(self._center._x+pos.x,self._center._y+pos.y)))
         return
@@ -388,10 +388,10 @@ class Circle:
     @property
     def lenght(self):
         return self._radius*math.pi*2
-       
-    @property    
+
+    @property
     def area(self):
-        return math.pow(self._radius,2)*math.pi    
+        return math.pow(self._radius,2)*math.pi
 
     @property
     def boundBox(self):
@@ -402,18 +402,18 @@ class Circle:
     @property
     def to_sympy(self):
         return sympy.Circle(self._center.to_sympy,self._radius)
- 
+
     @property
     def get_coeff_equation(self):
          a=-2*self._center.x
          b=-2*self._center.y
          c=math.pow(self._center.x,2)+math.pow(self._center.y,2)-math.pow(self._radius,2)
          return dict(a=a,b=b,c=c)
-        
+
     @property
     def __dict__(self):
         return dict(geo='Circle',radius=self._radius, center=self._center.__dict__)
-        
+
     def toJson(self):
         return json.dumps(self.__dict__)
 
@@ -432,28 +432,28 @@ class Arc(Circle):
         self._pointMiddle.node=cNode(self,'pointMiddle')
         self._boundBox=BoundBox(pointStart,pointStart)
         self.updateArc()
-        
+
     def pointAt(self,value):
         result=None
         if (value>=0.0) and (value<=self.lenght):
             a=self.angleStart.deg+(self.angle.deg/self.lenght)*value
             l=Line(self._center,Polar(self._radius,Angle(deg=a)))
             result=l.p2
-        return result      
+        return result
 
     def writeDXF(self,dwg,pos=Point(0,0)):
         if self.orientation>0:
-            dwg.add(dxf.arc(self._radius,
+            dwg.add(dxf.arc(self.radius,
                             (self._center._x+pos.x,self._center._y+pos.y),
                             self.angleEnd.deg,
                             self.angleStart.deg))
         else:
-            dwg.add(dxf.arc(self._radius,
+            dwg.add(dxf.arc(self.radius,
                             (self._center._x+pos.x,self._center._y+pos.y),
                             self.angleStart.deg,
-                            self.angleEnd.deg)) 
+                            self.angleEnd.deg))
         return
-        
+
     @property
     def pointStart(self):
         return self._pointStart
@@ -477,11 +477,11 @@ class Arc(Circle):
     def pointMiddle(self,p):
         self._pointMiddle=p
         self.updateArc()
-        
+
     @property
-    def chord(self):    
+    def chord(self):
         return Line(self.pointStart,self.pointEnd)
-        
+
     @property
     def segmentArea(self):
         alfa=self.angle.rad
@@ -517,7 +517,7 @@ class Arc(Circle):
 
         self.radius=VectorFromTwoPoints(self._center,self._pointStart).module
         self.updateBoundBox()
-        
+
     @property
     def angleStart(self):
         return VectorFromTwoPoints(self._center,self._pointStart).angle
@@ -543,12 +543,12 @@ class Arc(Circle):
     @property
     def boundBox(self):
         return self._boundBox
-        
+
     @property
     def orientation(self):
         return Triangle(self._pointStart,self._pointMiddle,self._pointEnd).orientation
-        
-    def updateBoundBox(self):    
+
+    def updateBoundBox(self):
 
         if self.orientation==1:
             s=self.angleEnd.normalized.deg
@@ -556,7 +556,7 @@ class Arc(Circle):
             s=self.angleStart.normalized.deg
 
         e=s+abs(self.angle.deg)
-    
+
         aa=[s]
         go=True
         while go:
@@ -585,7 +585,7 @@ class Arc(Circle):
         for a in aa:
             newBoundBox.updateWithPoint(PointFromVector(self._center,Polar(self._radius,Angle(deg=a))))
 
-        self._boundBox=newBoundBox    
+        self._boundBox=newBoundBox
 
     @property
     def __dict__(self):
@@ -593,7 +593,7 @@ class Arc(Circle):
 
     def toJson(self):
         return json.dump(self.__dict__)
-        
+
     def __repr__(self):
         return 'arc (start='+repr(self._pointStart)+', middle='+repr(self.pointMiddle)+', end='+repr(self.pointEnd)+' )'
 
@@ -605,8 +605,8 @@ class Path:
         self._geometries=[]
         self._lenght=0
         self.update()
-  
-    
+
+
     def update(self):
         gg=[]
         # cc=self._chain.copy()# --> run only with 3.x
@@ -615,7 +615,7 @@ class Path:
         while len(cc)>0:
             geo=cc.pop(0)
             p2=cc.pop(0)
-            if geo=='Arc': 
+            if geo=='Arc':
                 p3=cc.pop(0)
                 gg.append([geo,p1,p2,p3])
                 p1=p3
@@ -623,7 +623,7 @@ class Path:
                 gg.append([geo,p1,p2])
                 p1=p2
 
-        self._geometries=gg        
+        self._geometries=gg
 
         cbb=BoundBox()
         cl=0
@@ -637,15 +637,15 @@ class Path:
                 cbb.updateWithPoint(g_bb.topright)
                 cl+=self.geo(g).lenght
         self._boundBox=cbb
-        self._lenght=cl 
-        
-  
+        self._lenght=cl
+
+
     def writeDXF(self,dwg,pos=Point(0,0)):
         for i in range(0,len(self._geometries)):
             self.geo(i).writeDXF(dwg,pos)
         return
-       
-        
+
+
     def geo(self,id_geometry):
         g=''
         nn=[]
@@ -653,29 +653,29 @@ class Path:
             g=self._geometries[id_geometry][0]
             for n in self._geometries[id_geometry][1:]:
                 nn.append(self._nodes[n])
-        return Geo(g,nn)     
+        return Geo(g,nn)
 
-        
+
     def pointAt(self,value):
         result=None
         if (value>=0.0) and (value<=self.lenght):
             i=0
             compute_len=0
-            compute_len_old=0       
+            compute_len_old=0
             while (compute_len<value) and (i<len(self._geometries)):
                 compute_len_old=compute_len
                 compute_len+=self.geo(i).lenght
-                i=i+1 
-            compute_len_old+=0.0000000001    
-            result=self.geo(i-1).pointAt(value-compute_len_old)    
+                i=i+1
+            compute_len_old+=0.0000000001
+            result=self.geo(i-1).pointAt(value-compute_len_old)
         return result
-     
-        
+
+
     def appendGeo(self,element):
         self._chain+=element
         self.update()
-        
-        
+
+
     def insertGeo(self,element,idGeo):
         cc=self._chain.copy()
         i=1
@@ -690,8 +690,8 @@ class Path:
             idGeo-=1
         self._chain[i:1]=element
         self.update()
-        
-        
+
+
     def removeGeo (self,idGeo):
         cc=self._chain.copy()
         i=1
@@ -708,7 +708,7 @@ class Path:
         self._chain.pop(i)
         if g=='Arc': self._chain.pop()
         self.update()
-        
+
     @property
     def chain(self):
         return self._chain
@@ -716,19 +716,19 @@ class Path:
     def chain(self,chain):
         self._chain=chain
         self.update()
-        
+
     @property
     def nodes(self):
         return self._nodes
     @nodes.setter
     def nodes(self,nodes):
         self._nodes=nodes
-        self.update()    
-    
+        self.update()
+
     @property
     def geometries(self):
         return self._geometries
-        
+
     @property
     def boundBox(self):
         return self._boundBox
@@ -736,14 +736,14 @@ class Path:
     @property
     def lenght(self):
         return self._lenght
-        
+
     @property
-    def isClosed(self):        
+    def isClosed(self):
         result=False
         if self._chain[0]==self._chain[-1]:result=True
         if self._chain[1]=='Circle':result=True
         return result
-        
+
     @property
     def orientation(self):  #to be fixed
         o=0
@@ -756,8 +756,8 @@ class Path:
                o+=Triangle(self._nodes[p1],
                            self._nodes[geo[1]],
                            self._nodes[geo[2]]).orientation
-        return (o>0) - (o<0)    
-        
+        return (o>0) - (o<0)
+
     @property
     def area(self):
         if self.isClosed:
@@ -770,18 +770,18 @@ class Path:
                     if geo[0]=='Arc':
                        result+=Triangle(self._nodes[p1],
                                         self._nodes[geo[1]],
-                                        self._nodes[geo[3]]).area            
+                                        self._nodes[geo[3]]).area
                        result+=Arc(self._nodes[geo[1]],
                                    self._nodes[geo[2]],
-                                   self._nodes[geo[3]]).segmentArea       
-                    else:               
+                                   self._nodes[geo[3]]).segmentArea
+                    else:
                        result+=Triangle(self._nodes[p1],
                                         self._nodes[geo[1]],
-                                        self._nodes[geo[2]]).area       
-                    
+                                        self._nodes[geo[2]]).area
+
         else:
             result=0
-        return abs(result)    
+        return abs(result)
 
     @property
     def __dict__(self):
@@ -789,11 +789,11 @@ class Path:
         for node in self._nodes:
             nodes.append(node.__dict__)
         return dict(nodes=nodes, geometries=self._geometries)
-        
-    def __repr__(self):
-        return 'Path (boundBox='+repr(self._boundBox)+', lenght='+repr(self._lenght)+' )'       
 
-        
+    def __repr__(self):
+        return 'Path (boundBox='+repr(self._boundBox)+', lenght='+repr(self._lenght)+' )'
+
+
 class Shape:
     def __init__(self,outline=Path(),internal=[],boundBox=[Point(),Point()]):
         self.outline=outline
@@ -813,16 +813,16 @@ class Shape:
             area-=contour.area
             perimeter+=contour.lenght
             self._boundBox.updateWithPoint(contour.boundBox.bottomleft)
-            self._boundBox.updateWithPoint(contour.boundBox.topright) 
+            self._boundBox.updateWithPoint(contour.boundBox.topright)
         self._area['total']=area
-        self._perimeter['total']=perimeter   
+        self._perimeter['total']=perimeter
 
     def writeDXF(self,dwg,pos=Point(0,0)):
         self.outline.writeDXF(dwg,pos)
         for p in self.internal:
             p.writeDXF(dwg,pos)
         return
-            
+
     @property
     def boundBox(self):
         return self._boundBox
@@ -834,7 +834,7 @@ class Shape:
     @property
     def area(self):
         return self._area
-        
+
     @property
     def __dict__(self):
         result={}
@@ -842,44 +842,44 @@ class Shape:
         internal=[]
         for i in self.internal:
             internal.append(i.__dict__)
-        result['Internal']=internal    
+        result['Internal']=internal
         return result
-        
+
     def toJson(self):
         return json.dumps(self.__dict__)
-        
+
     def __repr__(self):
         return 'Shape (boundBox='+repr(self.boundBox)+')'
 
-        
+
 class Triangle:
     def __init__(self,p1=Point(),p2=Point(),p3=Point()):
         self.p1=p1
         self.p2=p2
         self.p3=p3
-      
+
     @property
     def orientation(self):
         o=((self.p3._x-self.p1._x) * (self.p2._y-self.p1._y))
         o-= ((self.p2._x-self.p1._x) * (self.p3._y-self.p1._y))
         return (o>0) - (o<0)
-    
+
     @property
     def area(self):
         a=[self.p1._x,self.p1._y,1]
         b=[self.p2._x,self.p2._y,1]
         c=[self.p3._x,self.p3._y,1]
-        return 0.5*DetMatrix3x3(a,b,c)  
-        
+        return 0.5*DetMatrix3x3(a,b,c)
+
     def __repr__(self):
         return 'Triangle (p1='+repr(self.p1)+', p2='+repr(self.p2)+' ,p3='+repr(self.p3)+')'
-        
-        
-        
+
+
+
 def Geo (geometry,nodes):
     makeGeo={'Line':Line,'Circle':Circle,'Arc':Arc}
     return makeGeo[geometry](*nodes)
-        
+
 def AngleFromTwoPoints(p1,p2):
     deltaX=float(p2.x-p1.x)
     deltaY=float(p2.y-p1.y)
@@ -897,7 +897,7 @@ def DetMatrix3x3(A,B,C):
     return A[0]*(B[1]*C[2]-B[2]*C[1])+ \
            A[1]*(B[2]*C[0]-B[0]*C[2])+ \
            A[2]*(B[0]*C[1]-B[1]*C[0])
-           
+
 def StepsBetweenAngles(a1,a2,d):
     a1=a1.normalized
     a2=a2.normalized
@@ -911,9 +911,9 @@ def StepsBetweenAngles(a1,a2,d):
     angles.append(a2)
     return angles
 
-    
+
 def IntersectionCircleToLine(circle,line):
-    
+
     result=[]
     xmin=line.boundBox.bottomleft.x
     ymin=line.boundBox.bottomleft.y
@@ -924,8 +924,8 @@ def IntersectionCircleToLine(circle,line):
     # x^2+y^2+ax+by+c=0
     # get a,b,c value of circle equation
     eqC=circle.get_coeff_equation
-    
-    if line.p1.x==line.p2.x:       
+
+    if line.p1.x==line.p2.x:
         # get system equation coefficient
         A=1
         B=eqC['b']
@@ -941,8 +941,8 @@ def IntersectionCircleToLine(circle,line):
                 y2=(-B+math.sqrt(DELTA))/(2*A)
                 if y2>=ymin and y2<=ymax:
                     result.append(Point(line.p1.x,y2))
-                    
-    else:      
+
+    else:
         # get m,q
         eqL=line.get_coeff_equation
 
@@ -958,26 +958,26 @@ def IntersectionCircleToLine(circle,line):
             y1=eqL['m']*x1+eqL['q']
             if x1>=xmin and x1<=xmax:
                 result.append(Point(x1,y1))
-            if DELTA>0:   
+            if DELTA>0:
                 x2=(-B+math.sqrt(DELTA))/(2*A)
                 y2=eqL['m']*x2+eqL['q']
                 if x2>=xmin and x2<=xmax:
                     result.append(Point(x2,y2))
-               
-    # Index adjustment           
+
+    # Index adjustment
     if len(result)==2:
         if Line(line.p1,result[0]).polar.module>Line(line.p1,result[1]).polar.module:
             result.reverse()
 
-    return result  
+    return result
 
 class Drawing:
-    
+
     def __init__(self):
         self.Scene={}
         self._boundBox=BoundBox()
         self.update()
-        
+
     def update(self):
         bb=BoundBox()
         l=len(self.Scene)
@@ -988,18 +988,18 @@ class Drawing:
                 g_bb=self.Scene[g]['Geo'].boundBox
                 bb.updateWithPoint(g_bb.bottomleft)
                 bb.updateWithPoint(g_bb.topright)
-        self._boundBox=bb        
+        self._boundBox=bb
         return
-        
+
     @property
     def boundBox(self):
         return self._boundBox
-        
+
     def insertGeo(self,id,geo,position=Point(0,0),rotation=Angle(0)):
         ## rotation for the moment not considered!!!!!!
         self.Scene[id]={'Geo':geo,'Position':position,'Rotation':rotation}
         self.update()
-        
+
     def getDXF(self):
         output = io.StringIO()
         drawing = dxf.drawing('drawing.dxf')
@@ -1007,11 +1007,11 @@ class Drawing:
             geo=self.Scene[id]['Geo']
             ##geo_class=geo.__class__.__name__
             geo.writeDXF(drawing,self.Scene[id]['Position'])
-            
-            
+
+
         drawing.save_to_fileobj(output)
         dxf_result=output.getvalue()
         return dxf_result
-    
-   
-    
+
+
+
