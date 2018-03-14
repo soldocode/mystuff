@@ -444,12 +444,12 @@ class Arc(Circle):
     def writeDXF(self,dwg,pos=Point(0,0)):
         if self.orientation>0:
             dwg.add(dxf.arc(self.radius,
-                            (self._center._x+pos.x,self._center._y+pos.y),
+                            (self._center.x+pos.x,self._center.y+pos.y),
                             self.angleEnd.deg,
                             self.angleStart.deg))
         else:
             dwg.add(dxf.arc(self.radius,
-                            (self._center._x+pos.x,self._center._y+pos.y),
+                            (self._center.x+pos.x,self._center.y+pos.y),
                             self.angleStart.deg,
                             self.angleEnd.deg))
         return
