@@ -431,7 +431,7 @@ class Arc(Circle):
         self._pointEnd.node=cNode(self,'pointEnd')
         self._pointMiddle.node=cNode(self,'pointMiddle')
         self._boundBox=BoundBox(pointStart,pointStart)
-        self.updateArc()
+        self._update()
 
     def pointAt(self,value):
         result=None
@@ -440,6 +440,7 @@ class Arc(Circle):
             l=Line(self._center,Polar(self._radius,Angle(deg=a)))
             result=l.p2
         return result
+
 
     def writeDXF(self,dwg,pos=Point(0,0)):
         if self.orientation>0:
@@ -453,6 +454,41 @@ class Arc(Circle):
                             self.angleStart.deg,
                             self.angleEnd.deg))
         return
+
+
+    def _update(self):
+        print(self)
+        a=[0,0,0]
+        b=[0,0,0]
+        c=[0,0,0]
+        d=[0,0,0]
+
+        a[0]=self._pointStart.x
+        b[0]=self._pointStart.y
+        c[0]=1
+        d[0]=math.pow(self._pointStart.x,2)+math.pow(self._pointStart.y,2)
+
+        a[1]=self._pointMiddle.x
+        b[1]=self._pointMiddle.y
+        c[1]=1
+        d[1]=math.pow(self._pointMiddle.x,2)+math.pow(self._pointMiddle.y,2)
+
+        a[2]=self._pointEnd.x
+        b[2]=self._pointEnd.y
+        c[2]=1
+        d[2]=math.pow(self._pointEnd.x,2)+math.pow(self._pointEnd.y,2)
+
+        detM=DetMatrix3x3(a,b,c)
+        detA=DetMatrix3x3(d,b,c)
+        detB=DetMatrix3x3(a,d,c)
+
+        self._center=Point(detA/detM/2,detB/detM/2)
+        #self._center.x=detA/detM/2
+        #self._center.y=detB/detM/2
+
+        self.radius=VectorFromTwoPoints(self._center,self._pointStart).module
+        self.updateBoundBox()
+
 
     @property
     def pointStart(self):
@@ -487,37 +523,7 @@ class Arc(Circle):
         alfa=self.angle.rad
         return ((alfa-math.sin(alfa))/2)*math.pow(self._radius,2)
 
-    def updateArc(self):
-        a=[0,0,0]
-        b=[0,0,0]
-        c=[0,0,0]
-        d=[0,0,0]
-
-        a[0]=self._pointStart.x
-        b[0]=self._pointStart.y
-        c[0]=1
-        d[0]=math.pow(self._pointStart.x,2)+math.pow(self._pointStart.y,2)
-
-        a[1]=self._pointMiddle.x
-        b[1]=self._pointMiddle.y
-        c[1]=1
-        d[1]=math.pow(self._pointMiddle.x,2)+math.pow(self._pointMiddle.y,2)
-
-        a[2]=self._pointEnd.x
-        b[2]=self._pointEnd.y
-        c[2]=1
-        d[2]=math.pow(self._pointEnd.x,2)+math.pow(self._pointEnd.y,2)
-
-        detM=DetMatrix3x3(a,b,c)
-        detA=DetMatrix3x3(d,b,c)
-        detB=DetMatrix3x3(a,d,c)
-
-        self._center.x=detA/detM/2
-        self._center.y=detB/detM/2
-
-        self.radius=VectorFromTwoPoints(self._center,self._pointStart).module
-        self.updateBoundBox()
-
+    
     @property
     def angleStart(self):
         return VectorFromTwoPoints(self._center,self._pointStart).angle
