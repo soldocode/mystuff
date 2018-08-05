@@ -605,7 +605,7 @@ class Arc(Circle):
 
 
 class Path:
-    def __init__(self,nodes=[],chain=[]):
+    def __init__(self,nodes=[Point(0,0)],chain=[0]):
         self._nodes=nodes
         self._chain=chain
         self._geometries=[]
@@ -677,12 +677,13 @@ class Path:
         return result
 
 
-    def appendGeo(self,element):
-        self._chain+=element
+    def appendGeo(self,geo,point):
+        self._nodes.append(point)
+        self._chain+=[geo,len(self._nodes)-1]
         self.update()
 
 
-    def insertGeo(self,element,idGeo):
+    def insertGeo(self,element,idGeo): #da correggere!!!!!
         cc=self._chain.copy()
         i=1
         while idGeo>0:
