@@ -684,14 +684,20 @@ class Path:
         return result
 
 
-    def appendGeo(self,geo,point):
-        self._nodes.append(point)
-        self._chain+=[geo,len(self._nodes)-1]
+    def appendGeo(self,geo,points=[0]):
+        self._chain+=[geo]
+        for pp in points:
+            if type(pp)==int:
+                self._chain+=[pp]
+            else:    
+                self._nodes.append(pp)
+                self._chain+=[len(self._nodes)-1]
         self.update()
 
 
-    def insertGeo(self,element,idGeo): #da correggere!!!!!
-        cc=self._chain.copy()
+    def insertGeo(self,geo,points,idGeo):
+        # cc=self._chain.copy()# --> run only with 3.x
+        cc=list(self._chain) # --> try with 2.7
         i=1
         while idGeo>0:
             cc.pop(0)
@@ -702,27 +708,51 @@ class Path:
             else:
                 i=i+2
             idGeo-=1
-        self._chain[i:1]=element
+        gg=[geo]
+        for pp in points:
+            if type(pp)==int:
+                gg+=[pp]
+            else:    
+                self._nodes.append(pp)
+                gg+=[len(self._nodes)-1]   
+        self._chain[i:1]=gg
         self.update()
 
 
-    def removeGeo (self,idGeo):
-        cc=self._chain.copy()
-        i=1
-        while idGeo>0:
-            cc.pop(0)
-            g=cc.pop(0)
-            if g=='Arc':
+    def removeNode (self,idNode):
+        tpn=self.getTotalPathNodes()
+        if (idNode==-1) or (idNode==tpn-1):
+           self._chain.pop(-1)
+           g=self._chain.pop(-1)
+           if type(g)==int:
+              self._chain.pop(-1)   
+        elif (idNode>-1) and (idNode<tpn-1):
+            # cc=self._chain.copy()# --> run only with 3.x
+            cc=list(self._chain) # --> try with 2.7
+            i=0
+            while idNode>0:
                 cc.pop(0)
-                i=i+3
-            else:
-                i=i+2
-            idGeo-=1
-        self._chain.pop(i)
-        self._chain.pop(i)
-        if g=='Arc': self._chain.pop()
+                g=cc.pop(0)
+                if g=='Arc':
+                    cc.pop(0)
+                    i=i+3
+                else:
+                    i=i+2
+                idNode-=1 
+            self._chain.pop(i)
+            g=self._chain.pop(i)
+            if g=='Arc': self._chain.pop(i)
         self.update()
+  
+        
+    def getTotalPathNodes (self):
+        num=1
+        for i in self._chain:
+            if type(i)!=int:
+                num+=1        
+        return num
 
+        
     @property
     def chain(self):
         return self._chain
