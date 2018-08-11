@@ -321,6 +321,13 @@ class Line:
             m=0.0
         q=self._p1.y-m*self._p1.x
         return dict(m=m,q=q)
+    
+    @property
+    def get_general_form_coeff(self):
+        A = self.p1.y - self.p2.y
+        B = self.p2.x - self.p1.x
+        C = self.p1.x*self.p2.y - self.p2.x*self.p1.y
+        return dict(a=A,b=B,c=-C)
 
     @property
     def __dict__(self):
@@ -919,7 +926,61 @@ def StepsBetweenAngles(a1,a2,d):
     return angles
 
 
-def IntersectionCircleToLine(circle,line):
+def IntersectionLineLine(l1,l2):
+
+    L1=l1.get_general_form_coeff
+    L2=l2.get_general_form_coeff
+    D  = L1['a'] * L2['b'] - L1['b'] * L2['a']
+    Dx = L1['c'] * L2['b'] - L1['b'] * L2['c']
+    Dy = L1['a'] * L2['c'] - L1['c'] * L2['a']
+    if D != 0:
+        x = Dx / D
+        y = Dy / D
+        result=[Point(x,y)]
+    else:
+        result=[]
+  
+    return result
+
+
+def IntersectionCircleCircle(c1,c2):
+    
+    result=[]
+     
+    x1,y1,r1 = c1.center.x,c1.center.y,c1.radius
+    x2,y2,r2 = c2.center.x,c2.center.y,c2.radius
+
+    dx = x2-x1
+    dy = y2-y1
+
+    d = math.sqrt(dx*dx+dy*dy)
+    if d > r1+r2:
+         # the circles are separate
+         return result
+    if d < abs(r1-r2):
+         # one circle is contained within the other
+         return result
+    if d == 0 and r1 == r2:
+         # circles are coincident 
+         return result
+
+    a = (r1*r1-r2*r2+d*d)/(2*d)
+    h = math.sqrt(r1*r1-a*a)
+    xm = x1 + a*dx/d
+    ym = y1 + a*dy/d
+    ix1 = xm + h*dy/d
+    ix2 = xm - h*dy/d
+    iy1 = ym - h*dx/d
+    iy2 = ym + h*dx/d
+    
+    result.append(Point(ix1,iy1))
+    if ix1!=ix2 or iy1!=iy2:
+        result.append(Point(ix2,iy2))
+    
+    return result
+
+    
+def IntersectionCircleLine(circle,line):
 
     result=[]
     xmin=line.boundBox.bottomleft.x

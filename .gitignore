@@ -49,3 +49,8 @@ Temporary Items
 
 *.pyc
 *.pyc
+geoFun.pyc
+PathModels/__init__.pyc
+PathModels/model_BOX.pyc
+PathModels/model_NUMBERS.pyc
+PathModels/model_UNP.pyc
