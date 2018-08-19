@@ -113,6 +113,12 @@ class Angle:
     def __repr__(self):
         return 'angle (degrees='+str(self._deg)+' | radians='+str(self._rad)+')'
 
+    def get_diff_to (self,angle,orientation): ## da sistemare!!!!
+        if orientation==1:
+            diff=angle.normalized.deg-self.normalized.deg
+        else:    
+            diff=-360+abs(self.normalized.deg-angle.normalized.deg)
+        return Angle(deg=diff)
 
 class Delta:
     def __init__(self, x=0, y=0, parent=None):
@@ -958,6 +964,16 @@ def StepsBetweenAngles(a1,a2,d):
 
 def IntersectionLineLine(l1,l2):
 
+    def is_between(v,l1,l2):
+        #v=number to be valued
+        #l1,l2=edges of the range
+        if l1>=l2:
+            if v>=l2 and v<=l1: return True
+        else:
+            if v>=l1 and v<=l2: return True
+        return False
+        
+    
     L1=l1.get_general_form_coeff
     L2=l2.get_general_form_coeff
     D  = L1['a'] * L2['b'] - L1['b'] * L2['a']
@@ -966,11 +982,10 @@ def IntersectionLineLine(l1,l2):
     if D != 0:
         x = Dx / D
         y = Dy / D
-        result=[Point(x,y)]
-    else:
-        result=[]
-  
-    return result
+        if is_between(x,l1.p1.x,l1.p2.x) and is_between(x,l2.p1.x,l2.p2.x):
+            return [Point(x,y)]  
+
+    return []
 
 
 def IntersectionCircleCircle(c1,c2):
@@ -1067,6 +1082,17 @@ def IntersectionCircleLine(circle,line):
         if Line(line.p1,result[0]).polar.module>Line(line.p1,result[1]).polar.module:
             result.reverse()
 
+    return result
+
+def IntersectionArcLine(arc,line):
+    result=[]
+    ii=IntersectionCircleLine(Circle(arc.center,arc.radius),line)
+    for r in ii:
+        a=VectorFromTwoPoints(arc._center,r).angle
+        print(a.normalized.deg-arc.angleStart.deg)
+        print(arc.angle.deg)
+        result.append(r)
+        
     return result
 
 class Drawing:
