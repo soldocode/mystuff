@@ -114,10 +114,14 @@ class Angle:
         return 'angle (degrees='+str(self._deg)+' | radians='+str(self._rad)+')'
 
     def get_diff_to (self,angle,orientation): ## da sistemare!!!!
-        if orientation==1:
-            diff=angle.normalized.deg-self.normalized.deg
-        else:    
-            diff=-360+abs(self.normalized.deg-angle.normalized.deg)
+        a1=angle.normalized.deg
+        a2=self.normalized.deg
+        if orientation==1 :
+            if a2>a1: diff=a2-360-a1
+            else:diff=-(a1-a2)
+        else:   
+            if a2>a1: diff=a2-a1
+            else: diff=a2-a1+360
         return Angle(deg=diff)
 
 class Delta:
@@ -553,7 +557,7 @@ class Arc(Circle):
         diff=s-e
         if Triangle(self._pointStart,self._pointMiddle,self._pointEnd).orientation==-1:
             diff=diff-360
-        return Angle(deg=(-diff))
+        return Angle(deg=abs(diff))
 
     @property
     def lenght(self):
@@ -566,6 +570,10 @@ class Arc(Circle):
     @property
     def orientation(self):
         return Triangle(self._pointStart,self._pointMiddle,self._pointEnd).orientation
+
+    @property
+    def toCircle(self):
+        return Circle(self._center,self._radius)
 
     def updateBoundBox(self):
 
@@ -1084,16 +1092,36 @@ def IntersectionCircleLine(circle,line):
 
     return result
 
+
 def IntersectionArcLine(arc,line):
     result=[]
-    ii=IntersectionCircleLine(Circle(arc.center,arc.radius),line)
+    ii=IntersectionCircleLine(arc.toCircle,line)
     for r in ii:
         a=VectorFromTwoPoints(arc._center,r).angle
-        print(a.normalized.deg-arc.angleStart.deg)
-        print(arc.angle.deg)
-        result.append(r)
-        
+        d=abs(a.get_diff_to(arc.angleStart,arc.orientation).deg)
+        if arc.angle.deg>=d:
+            result.append(r)
     return result
+
+
+def IntersectionArcCircle(arc,circle):
+    result=[]
+    ii=IntersectionCircleCircle(Circle(arc.center,arc.radius),circle)
+    for r in ii:
+        a=VectorFromTwoPoints(arc._center,r).angle
+        d=abs(a.get_diff_to(arc.angleStart,arc.orientation).deg)
+        if arc.angle.deg>=d:
+            result.append(r)    
+    return result
+
+
+def IntersectionArcArc(arc1,arc2):
+    result=[]
+    ii=IntersectionCircleCircle(arc1.toCircle,arc2.toCircle)
+    for r in ii:
+        result.append(r)   
+    return result
+
 
 class Drawing:
 
