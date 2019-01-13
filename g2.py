@@ -633,7 +633,6 @@ class Path:
         self._lenght=0
         self.update()
 
-
     def update(self):
         gg=[]
         # cc=self._chain.copy()# --> run only with 3.x
@@ -1119,7 +1118,12 @@ def IntersectionArcArc(arc1,arc2):
     result=[]
     ii=IntersectionCircleCircle(arc1.toCircle,arc2.toCircle)
     for r in ii:
-        result.append(r)   
+        a1=VectorFromTwoPoints(arc1._center,r).angle
+        d1=abs(a1.get_diff_to(arc1.angleStart,arc1.orientation).deg)
+        a2=VectorFromTwoPoints(arc2._center,r).angle
+        d2=abs(a2.get_diff_to(arc2.angleStart,arc2.orientation).deg)
+        if (arc1.angle.deg>=d1) and (arc2.angle.deg>=d2):
+            result.append(r)   
     return result
 
 
@@ -1165,5 +1169,7 @@ class Drawing:
         dxf_result=output.getvalue()
         return dxf_result
 
+ShapeFromModel={}
 
+from ShapeModels import *
 
