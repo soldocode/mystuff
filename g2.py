@@ -119,7 +119,7 @@ class Angle:
         if orientation==1 :
             if a2>a1: diff=a2-360-a1
             else:diff=-(a1-a2)
-        else:   
+        else:
             if a2>a1: diff=a2-a1
             else: diff=a2-a1+360
         return Angle(deg=diff)
@@ -324,20 +324,33 @@ class Line:
     def to_sympy(self):
         return sympy.Line(self._p1.to_sympy,self.p2.to_sympy)
 
-    @property
     def get_coeff_equation(self):
         m=math.tan(self._polar.angle.rad)
         if self._p1.y==self._p2.y:
             m=0.0
         q=self._p1.y-m*self._p1.x
         return dict(m=m,q=q)
-    
-    @property
+
     def get_general_form_coeff(self):
         A = self.p1.y - self.p2.y
         B = self.p2.x - self.p1.x
         C = self.p1.x*self.p2.y - self.p2.x*self.p1.y
         return dict(a=A,b=B,c=-C)
+
+    def is_parallel_to(self,line):
+        result=[False]
+        c1=self.get_coeff_equation()
+        c2=line.get_coeff_equation()
+        m1=round(c1['m'],8)
+        m2=round(c2['m'],8)
+        if m1==m2:
+            q1=round(c1['q'],8)
+            q2=round(c2['q'],8)
+            qd=q1-q2
+            a=math.atan(m1)
+            d=qd*math.cos(a)
+            result=[True,d]
+        return result
 
     @property
     def __dict__(self):
@@ -540,7 +553,7 @@ class Arc(Circle):
         alfa=self.angle.rad
         return ((alfa-math.sin(alfa))/2)*math.pow(self._radius,2)
 
-    
+
     @property
     def angleStart(self):
         return VectorFromTwoPoints(self._center,self._pointStart).angle
@@ -702,7 +715,7 @@ class Path:
         for pp in points:
             if type(pp)==int:
                 self._chain+=[pp]
-            else:    
+            else:
                 self._nodes.append(pp)
                 self._chain+=[len(self._nodes)-1]
         self.update()
@@ -725,9 +738,9 @@ class Path:
         for pp in points:
             if type(pp)==int:
                 gg+=[pp]
-            else:    
+            else:
                 self._nodes.append(pp)
-                gg+=[len(self._nodes)-1]   
+                gg+=[len(self._nodes)-1]
         self._chain[i:1]=gg
         self.update()
 
@@ -738,7 +751,7 @@ class Path:
            self._chain.pop(-1)
            g=self._chain.pop(-1)
            if type(g)==int:
-              self._chain.pop(-1)   
+              self._chain.pop(-1)
         elif (idNode>-1) and (idNode<tpn-1):
             # cc=self._chain.copy()# --> run only with 3.x
             cc=list(self._chain) # --> try with 2.7
@@ -751,21 +764,21 @@ class Path:
                     i=i+3
                 else:
                     i=i+2
-                idNode-=1 
+                idNode-=1
             self._chain.pop(i)
             g=self._chain.pop(i)
             if g=='Arc': self._chain.pop(i)
         self.update()
-  
-        
+
+
     def getTotalPathNodes (self):
         num=1
         for i in self._chain:
             if type(i)!=int:
-                num+=1        
+                num+=1
         return num
 
-        
+
     @property
     def chain(self):
         return self._chain
@@ -979,8 +992,8 @@ def IntersectionLineLine(l1,l2):
         else:
             if v>=l1 and v<=l2: return True
         return False
-        
-    
+
+
     L1=l1.get_general_form_coeff
     L2=l2.get_general_form_coeff
     D  = L1['a'] * L2['b'] - L1['b'] * L2['a']
@@ -990,15 +1003,15 @@ def IntersectionLineLine(l1,l2):
         x = Dx / D
         y = Dy / D
         if is_between(x,l1.p1.x,l1.p2.x) and is_between(x,l2.p1.x,l2.p2.x):
-            return [Point(x,y)]  
+            return [Point(x,y)]
 
     return []
 
 
 def IntersectionCircleCircle(c1,c2):
-    
+
     result=[]
-     
+
     x1,y1,r1 = c1.center.x,c1.center.y,c1.radius
     x2,y2,r2 = c2.center.x,c2.center.y,c2.radius
 
@@ -1013,7 +1026,7 @@ def IntersectionCircleCircle(c1,c2):
          # one circle is contained within the other
          return result
     if d == 0 and r1 == r2:
-         # circles are coincident 
+         # circles are coincident
          return result
 
     a = (r1*r1-r2*r2+d*d)/(2*d)
@@ -1024,14 +1037,14 @@ def IntersectionCircleCircle(c1,c2):
     ix2 = xm - h*dy/d
     iy1 = ym - h*dx/d
     iy2 = ym + h*dx/d
-    
+
     result.append(Point(ix1,iy1))
     if ix1!=ix2 or iy1!=iy2:
         result.append(Point(ix2,iy2))
-    
+
     return result
 
-    
+
 def IntersectionCircleLine(circle,line):
 
     result=[]
@@ -1110,7 +1123,7 @@ def IntersectionArcCircle(arc,circle):
         a=VectorFromTwoPoints(arc._center,r).angle
         d=abs(a.get_diff_to(arc.angleStart,arc.orientation).deg)
         if arc.angle.deg>=d:
-            result.append(r)    
+            result.append(r)
     return result
 
 
@@ -1123,7 +1136,7 @@ def IntersectionArcArc(arc1,arc2):
         a2=VectorFromTwoPoints(arc2._center,r).angle
         d2=abs(a2.get_diff_to(arc2.angleStart,arc2.orientation).deg)
         if (arc1.angle.deg>=d1) and (arc2.angle.deg>=d2):
-            result.append(r)   
+            result.append(r)
     return result
 
 
@@ -1172,4 +1185,3 @@ class Drawing:
 ShapeFromModel={}
 
 from ShapeModels import *
-
