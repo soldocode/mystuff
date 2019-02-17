@@ -110,6 +110,12 @@ def Draw(p):
         elif c[0]=='circle':
             rds=n[c[2]][0]-n[c[1]][0]
             d.add(dxf.circle(rds,(rx+n[c[1]][0],ry+n[c[1]][1]),layer=lay))
+   
+
+         
+#******************************************************                                                  
+#   ShapesFromDXF(dwg)                                          
+        
             
 def ShapesFromDXF(dwg):
 
@@ -126,10 +132,12 @@ def ShapesFromDXF(dwg):
         if not found: 
                 NODES.append(g2.Point(x,y))
         return i
+    
 
     NODES=[]
     GEOS=[]
     PATHS=[]
+    SHAPES=[]
     msp = dwg.modelspace()
 
     for e in msp:
@@ -138,38 +146,38 @@ def ShapesFromDXF(dwg):
             id1=indexNode(n[0],n[1])
             n=e.dxf.end
             id2=indexNode(n[0],n[1])
-            GEOS.append(['line',id1,id2])
+            GEOS.append(['Line',id1,id2])
         elif e.dxftype() == 'CIRCLE':
             n=e.dxf.center
             r=e.dxf.radius
             id1=indexNode(n[0],n[1])
             id2=indexNode(n[0]+r,n[1])
-            GEOS.append(['circle',id1,id2])
+            GEOS.append(['Circle',id1,id2])
         elif e.dxftype() == 'ARC':
             id1=0
             id2=1
             id3=2
-            GEOS.append(['arc',id1,id2,id3])
+            GEOS.append(['Arc',id1,id2,id3])
         
     gg=list(GEOS)
     while len(gg)>0:
             geo=gg.pop()
-            if geo[0]=='circle':
+            if geo[0]=='Circle':
                 PATHS.append([geo])
-            elif geo[0]=='line':
+            elif geo[0]=='Line':
                     p=[geo]
                     c_node=geo[2]
                     found= False
                     ind=0
                     while (len(gg)>0) and (not found) and (ind<len(gg)):
                         compare=gg[ind]
-                        if compare[0]=='line':
+                        if compare[0]=='Line':
                             if compare[1]==c_node:
-                                p.append(['line',compare[1],compare[2]])
+                                p.append(['Line',compare[1],compare[2]])
                                 found=True
                                 c_node=compare[2]
                             elif compare[2]==c_node:   
-                                p.append(['line',compare[2],compare[1]])
+                                p.append(['Line',compare[2],compare[1]])
                                 found=True
                                 c_node=compare[1]
                         if found:
@@ -177,6 +185,22 @@ def ShapesFromDXF(dwg):
                             found=False
                         else:
                             ind+=1
-                    PATHS.append(p) 
-    print(NODES)                
-    return PATHS
+                    PATHS.append(p)
+    
+    CLOSED={}
+    for p in PATHS:
+        if p[0][0]=='Circle': 
+            chain=[p[0][1],'Circle',p[0][2]]
+        elif p[0][1]==p[-1][2] and len(p)>2:
+            chain=[p[0][1]]
+            for g in p:
+                chain.append(g[0])
+                chain.append(g[-1])
+        path=g2.Path(NODES,chain)
+        area=path.boundBox.area
+        if area in CLOSED:
+            CLOSED[area].append(path)
+        else:
+            CLOSED[area]=[path]
+    
+    return CLOSED

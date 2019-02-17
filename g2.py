@@ -197,14 +197,28 @@ class BoundBox:
         if p.x<self.bottomleft.x:self.bottomleft.x=p.x
         if p.y>self.topright.y:self.topright.y=p.y
         if p.y<self.bottomleft.y:self.bottomleft.y=p.y
-        self.updateArea()
+        self.updateArea()#### is it necessary?
 
-    def updateArea(self):
+    def updateArea(self):#### to be deleted?????
         dx=self.topright.x-self.bottomleft.x
         dy=self.topright.y-self.bottomleft.y
         self.area=dx*dy
         return
 
+    @property
+    def height(self):
+        return self.topright.y-self.bottomleft.y
+    
+    @property
+    def width(self):
+        return self.topright.x-self.bottomleft.x
+    
+    @property
+    def center(self):
+        x=self.bottomleft.x+self.width/2
+        y=self.bottomleft.y+self.height/2
+        return Point(x,y)
+        
     @property
     def __dict__(self):
        result={}
@@ -552,7 +566,6 @@ class Arc(Circle):
     def segmentArea(self):
         alfa=self.angle.rad
         return ((alfa-math.sin(alfa))/2)*math.pow(self._radius,2)
-
 
     @property
     def angleStart(self):
