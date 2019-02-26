@@ -66,7 +66,6 @@ class Point:
         return 'Point (x='+str(self._x)+', y='+str(self._y)+')'
 
 
-
 class Angle:
     def __init__(self, deg=None, rad=None, parent=None):
         self._deg=0
@@ -123,6 +122,7 @@ class Angle:
             if a2>a1: diff=a2-a1
             else: diff=a2-a1+360
         return Angle(deg=diff)
+
 
 class Delta:
     def __init__(self, x=0, y=0, parent=None):
@@ -208,17 +208,17 @@ class BoundBox:
     @property
     def height(self):
         return self.topright.y-self.bottomleft.y
-    
+
     @property
     def width(self):
         return self.topright.x-self.bottomleft.x
-    
+
     @property
     def center(self):
         x=self.bottomleft.x+self.width/2
         y=self.bottomleft.y+self.height/2
         return Point(x,y)
-        
+
     @property
     def __dict__(self):
        result={}
@@ -963,23 +963,28 @@ def Geo (geometry,nodes):
     makeGeo={'Line':Line,'Circle':Circle,'Arc':Arc}
     return makeGeo[geometry](*nodes)
 
+
 def AngleFromTwoPoints(p1,p2):
     deltaX=float(p2.x-p1.x)
     deltaY=float(p2.y-p1.y)
     degree=math.degrees(math.atan2(deltaY,deltaX))
     return Angle(deg=degree)
 
+
 def VectorFromTwoPoints(p1,p2):
     module=math.sqrt(math.pow(p2.x-p1.x,2)+math.pow(p2.y-p1.y,2))
     return Polar(module,AngleFromTwoPoints(p1,p2))
 
+
 def PointFromVector(p,v):
     return Point(p.x+v.module*math.cos(v.angle.rad),p.y+v.module*math.sin(v.angle.rad))
+
 
 def DetMatrix3x3(A,B,C):
     return A[0]*(B[1]*C[2]-B[2]*C[1])+ \
            A[1]*(B[2]*C[0]-B[0]*C[2])+ \
            A[2]*(B[0]*C[1]-B[1]*C[0])
+
 
 def StepsBetweenAngles(a1,a2,d):
     a1=a1.normalized
@@ -1151,6 +1156,52 @@ def IntersectionArcArc(arc1,arc2):
         if (arc1.angle.deg>=d1) and (arc2.angle.deg>=d2):
             result.append(r)
     return result
+
+
+def PathsFromGeos(geos=[],nodes=[]):
+    gg=list(geos)
+    chains=[]
+    while len(gg)>0:
+        empty_search=False
+        found=False
+        g=gg.pop()
+        chain=[g[1],g[0]]
+        if g[0]=='Arc':
+            chain.append(g[2])
+        chain.append(g[-1])
+        node_to_find=g[-1]
+
+        while not empty_search:
+            i=0
+            empty_search=True
+            while i<len(gg):
+                if gg[i][1]==node_to_find:
+                    found=True
+                    chain.append(gg[i][0])
+                    if gg[i][0]=='Arc':
+                        chain.append(gg[i][2])
+                    chain.append(gg[i][-1])
+                    node_to_find=gg[i][-1]
+                elif gg[i][-1]==node_to_find:
+                    found=True
+                    chain.append(gg[i][0])
+                    if gg[i][0]=='Arc':
+                        chain.append(gg[i][2])
+                    chain.append(gg[i][1])
+                    node_to_find=gg[i][1]
+                if found:
+                    empty_search=False
+                    g=gg[i]
+                    gg.pop(i)
+                    found=False
+                else:
+                    i=i+1
+        chains.append(chain)
+    print ('chains:',chains)
+    paths=[]
+    for c in chains:
+        paths.append(Path(nodes,c))
+    return paths
 
 
 class Drawing:
