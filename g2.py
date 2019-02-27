@@ -792,6 +792,14 @@ class Path:
         return num
 
 
+    def traslateXY(self,x=0,y=0):
+        for n in self._nodes:
+            n._x+=x
+            n._y+=y
+        self.update()
+        return
+
+
     @property
     def chain(self):
         return self._chain
