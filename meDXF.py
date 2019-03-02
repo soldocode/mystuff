@@ -158,7 +158,9 @@ def ShapesFromDXF(dwg):
             id2=1
             id3=2
             GEOS.append(['Arc',id1,id2,id3])
-        
+            
+    pp=g2.PathsFromGeos(GEOS,NODES)
+    print (pp)
     gg=list(GEOS)
     while len(gg)>0:
             geo=gg.pop()

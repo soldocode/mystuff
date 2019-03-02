@@ -913,6 +913,25 @@ class Shape:
         for p in self.internal:
             p.writeDXF(dwg,pos)
         return
+    
+    def isWithin(self,shape):
+        result=False
+        #check if self.boundBox is smaller then shape.boundBox
+        bb1=self.boundBox
+        bb2=shape.boundBox
+        if bb1.area<bb2.area:
+            #check if self.boundBox is within shape.boundBox
+            btmlft1=bb1.bottomleft
+            btmlft2=bb2.bottomleft
+            btmlft_inside=(btmlft1.x>=btmlft2.x) and (btmlft1.y>=btmlft2.y)
+            tprgt1=bb1.topright
+            tprgt2=bb2.topright
+            tprgt_inside=(tprgt1.x<=tprgt2.x) and (tprgt1.y<=tprgt2.y) 
+            if  btmlft_inside and tprgt_inside:
+                #check if any self geos intersect with shape geos
+                #check if self random nodes is within shape
+                result=True
+        return result
 
     @property
     def boundBox(self):
@@ -1211,6 +1230,10 @@ def PathsFromGeos(geos=[],nodes=[]):
         paths.append(Path(nodes,c))
     return paths
 
+
+def ShapesFromPaths(paths=[]):
+    shapes=[]
+    return shapes
 
 class Drawing:
 
