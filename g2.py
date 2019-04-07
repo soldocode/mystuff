@@ -1184,7 +1184,14 @@ def IntersectionArcArc(arc1,arc2):
             result.append(r)
     return result
 
-
+def IntersectionPathPath(path1,path2):
+    result=[]
+    lp1=len(path1.geometries)
+    lp2=len(path2.geometries)
+    for m in range(0,lp1):
+        print(m)#path1.geo(m)
+    return result
+    
 def PathsFromGeos(geos=[],nodes=[]):
     gg=list(geos)
     chains=[]

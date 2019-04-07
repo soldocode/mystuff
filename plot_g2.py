@@ -43,5 +43,23 @@ def plot_a_point(p=Point(0,0)):
     plt.plot([p.x],[p.y],marker='D', linestyle='None')
     return    
   
+def plot_a_path(p):
+    #print('draw path')
+    c=list(p.chain)
+    nx=[]
+    ny=[]
+    while len(c)>0:
+        n=p.nodes[c.pop(0)]
+        nx.append(n.x)
+        ny.append(n.y)
+        if len(c)>1:
+            c.pop(0)
+    #print(nx,ny)
+    plt.plot(nx,ny)
+    return
+        
     
-plotFunction={'Point':plot_a_point,'Line':plot_a_line,'Circle':plot_a_circle}
+plotFunction={'Point':plot_a_point,
+              'Line':plot_a_line,
+              'Circle':plot_a_circle,
+              'Path':plot_a_path}
