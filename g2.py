@@ -831,8 +831,9 @@ class Path:
     @property
     def isClosed(self):
         result=False
-        if self._chain[0]==self._chain[-1]:result=True
-        if self._chain[1]=='Circle':result=True
+        if len(self._chain)>2:
+            if self._chain[0]==self._chain[-1]:result=True
+            if self._chain[1]=='Circle':result=True
         return result
 
     @property

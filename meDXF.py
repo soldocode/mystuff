@@ -160,49 +160,16 @@ def ShapesFromDXF(dwg):
             GEOS.append(['Arc',id1,id2,id3])
             
     pp=g2.PathsFromGeos(GEOS,NODES)
-    print (pp)
-    gg=list(GEOS)
-    while len(gg)>0:
-            geo=gg.pop()
-            if geo[0]=='Circle':
-                PATHS.append([geo])
-            elif geo[0]=='Line':
-                    p=[geo]
-                    c_node=geo[2]
-                    found= False
-                    ind=0
-                    while (len(gg)>0) and (not found) and (ind<len(gg)):
-                        compare=gg[ind]
-                        if compare[0]=='Line':
-                            if compare[1]==c_node:
-                                p.append(['Line',compare[1],compare[2]])
-                                found=True
-                                c_node=compare[2]
-                            elif compare[2]==c_node:   
-                                p.append(['Line',compare[2],compare[1]])
-                                found=True
-                                c_node=compare[1]
-                        if found:
-                            gg.pop(ind)
-                            found=False
-                        else:
-                            ind+=1
-                    PATHS.append(p)
-    
+
     CLOSED={}
-    for p in PATHS:
-        if p[0][0]=='Circle': 
-            chain=[p[0][1],'Circle',p[0][2]]
-        elif p[0][1]==p[-1][2] and len(p)>2:
-            chain=[p[0][1]]
-            for g in p:
-                chain.append(g[0])
-                chain.append(g[-1])
-        path=g2.Path(NODES,chain)
-        area=path.boundBox.area
+    area=0
+    for p in pp:
+        if p.isClosed:
+            area=p.area        
         if area in CLOSED:
-            CLOSED[area].append(path)
+            CLOSED[area].append(p)
         else:
-            CLOSED[area]=[path]
+            CLOSED[area]=[p]
+            
     
     return CLOSED

@@ -46,14 +46,19 @@ def plot_a_point(p=Point(0,0)):
 def plot_a_path(p):
     #print('draw path')
     c=list(p.chain)
+    print (c)
     nx=[]
     ny=[]
     while len(c)>0:
-        n=p.nodes[c.pop(0)]
+        index=c.pop(0)
+        print (index)
+        n=p.nodes[index]
         nx.append(n.x)
         ny.append(n.y)
         if len(c)>1:
-            c.pop(0)
+            geo=c.pop(0)
+            if geo=='Arc':
+                c.pop(0)
     #print(nx,ny)
     plt.plot(nx,ny)
     return
