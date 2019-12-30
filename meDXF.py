@@ -117,7 +117,7 @@ def Draw(p):
 #   ShapesFromDXF(dwg)                                          
         
             
-def ShapesFromDXF(dwg):
+def PathsFromDXF(dwg):
 
     def indexNode(_x,_y):
         i=0
@@ -161,15 +161,15 @@ def ShapesFromDXF(dwg):
             
     pp=g2.PathsFromGeos(GEOS,NODES)
 
-    CLOSED={}
+    areas={}
     area=0
     for p in pp:
         if p.isClosed:
             area=p.area        
-        if area in CLOSED:
-            CLOSED[area].append(p)
+        if area in areas:
+            areas[area].append(p)
         else:
-            CLOSED[area]=[p]
+            areas[area]=[p]
             
     
-    return CLOSED
+    return areas

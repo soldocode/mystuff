@@ -204,6 +204,14 @@ class BoundBox:
         dy=self.topright.y-self.bottomleft.y
         self.area=dx*dy
         return
+    
+    def includeBoundBox(self,bb):
+        result=False
+        cond1=(self.bottomleft.x<=bb.bottomleft.x) and (self.bottomleft.y<=bb.bottomleft.y)
+        cond2=(self.topright.x>=bb.topright.x) and (self.topright.y>=bb.topright.y)
+        if cond1 & cond2:
+            result=True
+        return result 
 
     @property
     def height(self):
@@ -1232,7 +1240,7 @@ def PathsFromGeos(geos=[],nodes=[]):
                 else:
                     i=i+1
         chains.append(chain)
-    print ('chains:',chains)
+    #print ('chains:',chains)
     paths=[]
     for c in chains:
         paths.append(Path(nodes,c))
@@ -1257,9 +1265,10 @@ class Drawing:
             ls=list(self.Scene)
             bb=self.Scene[ls[0]]['Geo'].boundBox
             for g in ls:
-                g_bb=self.Scene[g]['Geo'].boundBox
-                bb.updateWithPoint(g_bb.bottomleft)
-                bb.updateWithPoint(g_bb.topright)
+                if self.Scene[g]['Class']=='GEO':
+                   g_bb=self.Scene[g]['Geo'].boundBox
+                   bb.updateWithPoint(g_bb.bottomleft)
+                   bb.updateWithPoint(g_bb.topright)
         self._boundBox=bb
         return
 
@@ -1269,17 +1278,37 @@ class Drawing:
 
     def insertGeo(self,id,geo,position=Point(0,0),rotation=Angle(0)):
         ## rotation for the moment not considered!!!!!!
-        self.Scene[id]={'Geo':geo,'Position':position,'Rotation':rotation}
+        self.Scene[id]={'Class':'GEO','Geo':geo,'Position':position,'Rotation':rotation}
         self.update()
-
+        
+        
+    def insertText(self,id,text,position=Point(0,0),height=15,rotation=Angle(0)):
+        ## rotation for the moment not considered!!!!!!
+        self.Scene[id]={'Class':'TXT',
+                        'Txt':text,
+                        'Position':[position.x,position.y],
+                        'Height':height,
+                        'Rotation':rotation}
+        self.update()
+        
+        
     def getDXF(self):
         output = io.StringIO()
         drawing = dxf.drawing('drawing.dxf')
         for id in self.Scene:
-            geo=self.Scene[id]['Geo']
-            ##geo_class=geo.__class__.__name__
-            geo.writeDXF(drawing,self.Scene[id]['Position'])
-
+            if self.Scene[id]['Class']=='GEO':
+               geo=self.Scene[id]['Geo']
+               ##geo_class=geo.__class__.__name__
+               geo.writeDXF(drawing,self.Scene[id]['Position'])              
+            if self.Scene[id]['Class']=='TXT':
+               text = dxf.text(self.Scene[id]['Txt'],
+                               height=self.Scene[id]['Height'],)
+               text['insert']=(self.Scene[id]['Position'][0],
+                               self.Scene[id]['Position'][1])
+               text['layer'] = 'TEXT'
+               text['color'] = 7
+               drawing.add(text)
+            
 
         drawing.save_to_fileobj(output)
         dxf_result=output.getvalue()
