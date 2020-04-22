@@ -204,14 +204,14 @@ class BoundBox:
         dy=self.topright.y-self.bottomleft.y
         self.area=dx*dy
         return
-    
+
     def includeBoundBox(self,bb):
         result=False
         cond1=(self.bottomleft.x<=bb.bottomleft.x) and (self.bottomleft.y<=bb.bottomleft.y)
         cond2=(self.topright.x>=bb.topright.x) and (self.topright.y>=bb.topright.y)
         if cond1 & cond2:
             result=True
-        return result 
+        return result
 
     @property
     def height(self):
@@ -488,7 +488,7 @@ class Arc(Circle):
     def pointAt(self,value):
         result=None
         if (value>=0.0) and (value<=self.lenght):
-            a=self.angleStart.deg+(self.angle.deg/self.lenght)*value
+            a=self.angleStart.deg-self.orientation*(self.angle.deg/self.lenght)*value
             l=Line(self._center,Polar(self._radius,Angle(deg=a)))
             result=l.p2
         return result
@@ -922,7 +922,7 @@ class Shape:
         for p in self.internal:
             p.writeDXF(dwg,pos)
         return
-    
+
     def isWithin(self,shape):
         result=False
         #check if self.boundBox is smaller then shape.boundBox
@@ -935,7 +935,7 @@ class Shape:
             btmlft_inside=(btmlft1.x>=btmlft2.x) and (btmlft1.y>=btmlft2.y)
             tprgt1=bb1.topright
             tprgt2=bb2.topright
-            tprgt_inside=(tprgt1.x<=tprgt2.x) and (tprgt1.y<=tprgt2.y) 
+            tprgt_inside=(tprgt1.x<=tprgt2.x) and (tprgt1.y<=tprgt2.y)
             if  btmlft_inside and tprgt_inside:
                 #check if any self geos intersect with shape geos
                 #check if self random nodes is within shape
@@ -1200,7 +1200,7 @@ def IntersectionPathPath(path1,path2):
     for m in range(0,lp1):
         print(m)#path1.geo(m)
     return result
-    
+
 def PathsFromGeos(geos=[],nodes=[]):
     gg=list(geos)
     chains=[]
@@ -1280,8 +1280,8 @@ class Drawing:
         ## rotation for the moment not considered!!!!!!
         self.Scene[id]={'Class':'GEO','Geo':geo,'Position':position,'Rotation':rotation}
         self.update()
-        
-        
+
+
     def insertText(self,id,text,position=Point(0,0),height=15,rotation=Angle(0)):
         ## rotation for the moment not considered!!!!!!
         self.Scene[id]={'Class':'TXT',
@@ -1290,8 +1290,8 @@ class Drawing:
                         'Height':height,
                         'Rotation':rotation}
         self.update()
-        
-        
+
+
     def getDXF(self):
         output = io.StringIO()
         drawing = dxf.drawing('drawing.dxf')
@@ -1299,7 +1299,7 @@ class Drawing:
             if self.Scene[id]['Class']=='GEO':
                geo=self.Scene[id]['Geo']
                ##geo_class=geo.__class__.__name__
-               geo.writeDXF(drawing,self.Scene[id]['Position'])              
+               geo.writeDXF(drawing,self.Scene[id]['Position'])
             if self.Scene[id]['Class']=='TXT':
                text = dxf.text(self.Scene[id]['Txt'],
                                height=self.Scene[id]['Height'],)
@@ -1308,7 +1308,7 @@ class Drawing:
                text['layer'] = 'TEXT'
                text['color'] = 7
                drawing.add(text)
-            
+
 
         drawing.save_to_fileobj(output)
         dxf_result=output.getvalue()
