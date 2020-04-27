@@ -9,8 +9,8 @@ import os,shutil
 import ezdxf
 import datetime
     
-ITEM_FOLDER='\\\\10.0.0.199\Archivio\ARTICOLI'
-ORDER_FOLDER='\\\\10.0.0.199\Archivio\COMMESSE'
+ITEM_FOLDER='\\\\192.168.1.11\Archivio\ARTICOLI'
+ORDER_FOLDER='\\\\192.168.1.11\Archivio\COMMESSE'
 D_YEAR=str(datetime.date.today().year)
 
 
