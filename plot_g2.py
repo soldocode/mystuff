@@ -28,6 +28,7 @@ class Scene:
         plt.close()
         plt.axis(self.area)
         for block in self.geometries:
+            print (block)
             for g in block:
                 geos=g['path']
                 color=g['color']
