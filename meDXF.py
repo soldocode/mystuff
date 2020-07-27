@@ -117,7 +117,7 @@ def Draw(p):
 #   ShapesFromDXF(dwg)                                          
         
             
-def PathsFromDXF(dwg):
+def PathsFromDXF(dwg,layers=''):
 
     def indexNode(_x,_y):
         i=0
@@ -139,25 +139,29 @@ def PathsFromDXF(dwg):
     PATHS=[]
     SHAPES=[]
     msp = dwg.modelspace()
+    if len(layers)==0: layers='all'
+    layers=layers.split(',')
 
     for e in msp:
-        if e.dxftype() == 'LINE':
-            n=e.dxf.start
-            id1=indexNode(n[0],n[1])
-            n=e.dxf.end
-            id2=indexNode(n[0],n[1])
-            GEOS.append(['Line',id1,id2])
-        elif e.dxftype() == 'CIRCLE':
-            n=e.dxf.center
-            r=e.dxf.radius
-            id1=indexNode(n[0],n[1])
-            id2=indexNode(n[0]+r,n[1])
-            GEOS.append(['Circle',id1,id2])
-        elif e.dxftype() == 'ARC':
-            id1=0
-            id2=1
-            id3=2
-            GEOS.append(['Arc',id1,id2,id3])
+        #print(e.dxf.layer)
+        if layers[0]=='all' or e.dxf.layer in layers:
+            if e.dxftype() == 'LINE':
+                n=e.dxf.start
+                id1=indexNode(n[0],n[1])
+                n=e.dxf.end
+                id2=indexNode(n[0],n[1])
+                GEOS.append(['Line',id1,id2])
+            elif e.dxftype() == 'CIRCLE':
+                n=e.dxf.center
+                r=e.dxf.radius
+                id1=indexNode(n[0],n[1])
+                id2=indexNode(n[0]+r,n[1])
+                GEOS.append(['Circle',id1,id2])
+            elif e.dxftype() == 'ARC':
+                id1=0
+                id2=1
+                id3=2
+                GEOS.append(['Arc',id1,id2,id3])
             
     pp=g2.PathsFromGeos(GEOS,NODES)
 
