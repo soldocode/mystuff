@@ -9,7 +9,6 @@ Created on Sun Nov 24 17:14:59 2019
 
 import g2
 import os
-#import ezdxf
 
             
 def paths_from_DXF(dwg,layers=''):
@@ -75,13 +74,24 @@ def paths_from_DXF(dwg,layers=''):
 def parse(txts,read_dxf):
     '''
     Parameters
-        - txts
-        - dxf
+        - txts :array of texts to write in dxf
+                example:
+                    NOME:20181P01_AA50510
+                    PEZZI:5
+                    MAT:DUROX
+                    SP:8
+                    COMM:20181
+                    POS:P01
+        - read_dxf : drawing object of ezdxf.drawing module
 
     Returns
-        - dxf
-        - svg
-        - vals
+        - dxf  : dxf file ready for Lantek
+        - svg  : svg file for html
+        - vals : dict of values
+                     tlen---------> shape's perimeter
+                     npierce -----> number of cut piercing
+                     tarea -------> shape's area
+                     nbrushings --> number of welded brushings
 
     '''
     
