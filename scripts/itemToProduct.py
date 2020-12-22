@@ -53,6 +53,7 @@ def itemToProduct(itemPath,orderPath,order,pos,number):
     print ('orderPath:',orderPath)
     print ('number:',number)
     msg='Done'
+    not_found=True
     if not os.path.exists(itemPath):
         msg='Errore: '+itemPath+' non trovato!!!'
     else:
@@ -60,8 +61,12 @@ def itemToProduct(itemPath,orderPath,order,pos,number):
             os.makedirs(orderPath)
         if os.path.exists(itemPath+'\\PLASMA'):
             copyCuts(orderPath,itemPath,'PLASMA',number,order,pos)
+            not_found=False
         if os.path.exists(itemPath+'\\LASER'):
             copyCuts(orderPath,itemPath,'LASER',number,order,pos)
+            not_found=False
+    if not_found:print('Nessuna lavorazione presente!!!!')        
+    
                                                                        
     return msg
 
