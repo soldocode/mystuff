@@ -10,7 +10,7 @@ Created on Sun Nov 24 17:14:59 2019
 import g2
 import os
 
-            
+
 def paths_from_DXF(dwg,layers=''):
 
     def indexNode(_x,_y):
@@ -23,10 +23,10 @@ def paths_from_DXF(dwg,layers=''):
                 found=True
                 i=i-1
             i=i+1
-        if not found: 
+        if not found:
                 NODES.append(g2.Point(x,y))
         return i
-    
+
 
     NODES=[]
     GEOS=[]
@@ -55,13 +55,13 @@ def paths_from_DXF(dwg,layers=''):
                 id2=1
                 id3=2
                 GEOS.append(['Arc',id1,id2,id3])
-            
+
     pp=g2.PathsFromGeos(GEOS,NODES)
     areas={}
     area=0
     for p in pp:
         if p.isClosed:
-            area=p.area        
+            area=p.area
         if area in areas:
             areas[area].append(p)
         else:
@@ -92,23 +92,25 @@ def parse(txts,read_dxf):
                      npierce -----> number of cut piercing
                      tarea -------> shape's area
                      nbrushings --> number of welded brushings
+                     dimx --------> shape's width
+                     dimy --------> shape's height
 
     '''
-    
+
     AREA_MIN_GRAIN=154
     AREA_MIN_BUSHINGS=575
     TXT_HEIGHT=18
-    
+
     vals={'tlen':0,'npierce':0,'tarea':0,'nbushings':0}
-    
+
     write_dxf=g2.Drawing()
     w_id=0
     p=paths_from_DXF(read_dxf)
-    
+
     area_list=list(p.keys())
     area_list.sort(reverse=True)
-    
-    
+
+
     if len(area_list)>0:
         # get shape with larger area
         shape=p[area_list[0]][0]
@@ -116,13 +118,15 @@ def parse(txts,read_dxf):
         vals['npierce']=1
         vals['tarea']=shape.area
         bb=shape.boundBox
-        
+        vals['dimx']=bb.width
+        vals['dimy']=bb.height
+
         # put shape into new drawing
         for k in range(0,len(shape.geometries)):
             write_dxf.insertGeo(w_id,shape.geo(k))
             w_id+=1
-        
-        
+
+
         # find all internal shapes
         del p[area_list[0]]
         in_shape=[]
@@ -130,8 +134,8 @@ def parse(txts,read_dxf):
              for c in p[s]:
                  if shape.boundBox.includeBoundBox(c.boundBox) and c.isClosed:
                      in_shape.append(c)
-                     
-        # refine valid internal shape  
+
+        # refine valid internal shape
         to_draw=[]
         for c in in_shape:
             added=False
@@ -141,36 +145,32 @@ def parse(txts,read_dxf):
                     if c.area>t.area:
                         to_draw.remove(t)
                         to_draw.append(c)
-                        
-            if not added: to_draw.append(c)        
+
+            if not added: to_draw.append(c)
         vals['npierce']+=len(to_draw)
-            
+
         # put internal shapes into the drawing
         for t in to_draw:
             for k in range(0,len(t.geometries)):
                 if t.area<AREA_MIN_GRAIN:
                     write_dxf.insertGeo(w_id,g2.Circle(t.boundBox.center,1.5))
-                else: 
+                else:
                     write_dxf.insertGeo(w_id,t.geo(k))
                     vals['tlen']+=t.lenght
                     vals['tarea']-=t.area
                     if t.area<AREA_MIN_BUSHINGS: vals['nbushings']+=1
             w_id+=1
-        
+
         # put texts into the drawing
         text_pos=shape.boundBox.bottomleft
         text_pos.y-=TXT_HEIGHT
         for txt in txts:
-            text_pos.y-=TXT_HEIGHT*1.25        
+            text_pos.y-=TXT_HEIGHT*1.25
             write_dxf.insertText(w_id,txt,text_pos,TXT_HEIGHT)
             w_id+=1
-        
+
         # get output dxf and svg
         output_dxf=write_dxf.toDXF()
         output_svg=write_dxf.toSVG()
-        
+
         return dict(dxf=output_dxf,svg=output_svg,vals=vals)
-        
-
-
-
